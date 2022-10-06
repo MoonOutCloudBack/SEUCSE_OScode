@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "env.h": "c",
+        "trap.h": "c",
+        "types.h": "c",
+        "string.h": "c",
+        "printf.h": "c",
+        "print.h": "c",
+        "lib.h": "c",
+        "idle.h": "c"
+    }
+}
