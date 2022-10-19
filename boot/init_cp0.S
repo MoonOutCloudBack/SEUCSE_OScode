@@ -53,15 +53,19 @@ OF SUCH DAMAGE.
 	.set	noat                // Don't allow the assembler to use r1(at) for synthetic instr.
 /**************************************************************************************
 **************************************************************************************/
-LEAF(init_cp0)
+LEAF(init_cp0) # 貌似是（不调用其他函数的）函数的意思
 
     // Initialize Status
-	li	v1, 0x00400404		// (M_StatusERL | M_StatusIPL1 | M_StatusBEV)
-	mtc0	v1, C0_STATUS		// write C0_Status
+	li		v1, 0x00400404		// (M_StatusERL | M_StatusIPL1 | M_StatusBEV)
+	mtc0	v1, C0_STATUS		// write C0_Status 
+	# MIPS32 定义了 2 条协处理器访问指令：mtc0 实现修改 CP0 中的寄存器，mfc0 实现读取 CP0 中的寄存器。
+	# mtc0: arg2 CP0 寄存器 <= arg1 通用寄存器的值
+	# mfc0: fetch, arg1 通用寄存器 <= arg2 CP0 寄存器的值
 
 	// Initialize Watch registers if implemented.
 	mfc0	v0, C0_CONFIG1		// read C0_Config1
-	ext	v1, v0, 3, 1		// extract bit 3 WR (Watch registers implemented)
+	ext		v1, v0, 3, 1		// extract bit 3 WR (Watch registers implemented)
+	# ext 	rD, rS, pos, size	// extract bit field，提取一部分 bits，rD <= rS[ pos+size-1 : pos ]
 	beq 	v1, zero, done_wr
 	li    	v1, 0x7				// (M_WatchHiI | M_WatchHiR | M_WatchHiW)
 
@@ -98,6 +102,6 @@ done_wr:
 	// Clear timer interrupt. (Count was cleared at the reset vector to allow timing boot.)
 	mtc0	zero, C0_COMPARE	// write C0_Compare
 
-        jr      ra
+    jr      ra
 	nop
 END(init_cp0)

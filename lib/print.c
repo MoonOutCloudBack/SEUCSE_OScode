@@ -32,6 +32,7 @@ void lp_Print(void (*output)(void *, char *, int),
 			  va_list ap)
 {
 
+// 下面的宏定义，用于解析 %d %s 这样的东西
 #define OUTPUT(arg, s, l)                                                 \
 	{                                                                     \
 		if (((l) < 0) || ((l) > LP_MAX_BUF))                              \

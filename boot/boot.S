@@ -51,6 +51,9 @@ OF SUCH DAMAGE.
 #include <mips/m32c0.h>
 
 .set    noreorder               # Don't allow the assembler to reorder instructions.
+# 解释：默认情况下，MIPS 汇编器会尝试重新排序周围的指令，自动填充分支、加载延迟槽。
+# 但是，如果我们需要保持对指令顺序的精确控制，比如在大量使用的库函数的情况下，那么 .set noreorder
+# 它用来告诉汇编器，在下次遇到相应的命令之前，抑制其重新排序功能
 
     # The first function, __reset_vector, just loads the address of the __cpu_init function
     # and jumps to it. This does 2 things; First it will jump to a KSEG1 address which is a
@@ -62,7 +65,7 @@ OF SUCH DAMAGE.
 **************************************************************************************/
 
 LEAF(__reset_vector)
-    la a2,__cpu_init
+    la a2, __cpu_init
     jr a2
                     # Clear cp0 Count (Used to measure boot time.)
     nop
