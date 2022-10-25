@@ -29,13 +29,18 @@ static void *memSet(void *s, int c, size_t n)
     return x;
   }
 
-  int load_elf(const uint8_t *elf, const uint32_t elf_size) {
+int load_elf(const uint8_t *elf, const uint32_t elf_size) {
   // sanity checks
-                                  /* too small */
+  if(elf_size <= sizeof(ELF32_Ehdr))
+    return 1;                   /* too small */
 
-                                  /* not a elf32 file */
+  const ELF32_Ehdr *eh = (const ELF32_Ehdr *) elf;
+  if(!IS_ELF32(*eh))
+    return 2;                   /* not a elf32 file */
 
-                                  /* internal damaged */
+  const ELF32_Ehdr *ph = (const ELF32_Ehdr *)(elf + eh->e_phoff);
+  if(elf_size < eh->e_phoff + eh->e_phnum*sizeof(*ph))
+    return 3;                   /* internal damaged */
 
   uint32_t i;
   for(i=0; i<eh->e_phnum; i++) {
@@ -58,13 +63,16 @@ static void *memSet(void *s, int c, size_t n)
 int load_elf_sd(const uint8_t *elf, const uint32_t elf_size) {
   
   // sanity checks
-                                 /* too small */
-               
-               
-                                 /* not a elf32 file */
+  if(elf_size <= sizeof(ELF32_Ehdr))
+    return 1;                   /* too small */
 
-  
-                                 /* internal damaged */
+  const ELF32_Ehdr *eh = (const ELF32_Ehdr *) elf;
+  if(!IS_ELF32(*eh))
+    return 2;                   /* not a elf32 file */
+
+  const ELF32_Ehdr *ph = (const ELF32_Ehdr *)(elf + eh->e_phoff);
+  if(elf_size < eh->e_phoff + eh->e_phnum*sizeof(*ph))
+    return 3;                   /* internal damaged */
 
   uint32_t i;
   for(i=0; i<eh->e_phnum; i++) {

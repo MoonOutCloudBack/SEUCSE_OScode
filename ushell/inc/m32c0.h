@@ -818,7 +818,7 @@
 #define C0_ENTRYHI	$10
 #define C0_TLBHI	$10
 #define C0_COMPARE	$11
-#define C0_STATUS	$12
+#define CP0_STATUS	$12
 #define C0_SR		$12
 #define C0_INTCTL	$12,1
 #define C0_SRSCTL	$12,2
@@ -960,7 +960,7 @@ typedef signed long long	sreg_t;
 #define C0_ENTRYHI	10
 #define C0_TLBHI	10
 #define C0_COMPARE	11
-#define C0_STATUS	12
+#define CP0_STATUS	12
 #define C0_SR		12
 #define C0_INTCTL	0x10C
 #define C0_SRSCTL	0x20C
