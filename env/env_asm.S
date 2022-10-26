@@ -108,7 +108,7 @@ END(set_epc)
 
 
 LEAF(get_status)
-	mfc0 	v0, C0_STATUS
+	mfc0 	v0, CP0_STATUS
 	jr	ra
 	nop
 END(get_status)
@@ -140,10 +140,10 @@ LEAF(get_nested_epc)
 END(get_nested_epc)
 
 LEAF(set_exl)
-	mfc0 	v0, C0_STATUS
+	mfc0 	v0, CP0_STATUS
 	li k0,0xFFFFFFFD
 	and v0, k0
-	mtc0 v0,C0_STATUS
+	mtc0 v0,CP0_STATUS
 	ehb
 	jr	ra
 	nop
