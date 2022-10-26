@@ -20,15 +20,16 @@ struct Page *pages;
 static u_long freemem;
 
 /* 变量 page_free_list 来以链表的形式表示所有的空闲物理内存 */
-static struct Page* page_free_list; /* Free list of physical pages */
+static struct FreePageList page_free_list; /* Free list of physical pages */
 struct HashTable ht;
 
 u_long getNextTlb()//要写的下一个tlb
 {
     printf("nexttlb:%d\n",tlbCount);
-    
-
-
+    //TODO
+    int ret = tlbCount;
+    tlbCount = (tlbCount + 1) % maxTLB;
+    return ret;
 }
 
 
@@ -43,14 +44,14 @@ u_long getNextTlb()//要写的下一个tlb
 u_long
 page2ppn(struct Page *pp)
 {
-    
+    return pp - pages;
 }
 
 // transfer page to physical address
 u_long
 page2pa(struct Page *pp)
 {
-    
+    return page2ppn(pp) << PGSHIFT;
 }
 
 // transfer physical address to page
@@ -59,14 +60,14 @@ pa2page(u_long pa)
 {
     if (PPN(pa) >= npage)
         panic("pa2page called with invalid pa: %x\n", pa);
-    return ;
+    return pages + PPN(pa);
 }
 
 // transfer page to kernel virtual address
 u_long
 page2kva(struct Page *pp)
 {
-    
+    return KADDR(page2pa(pp));
 }
 
 // transfer virtual address to physical address
@@ -78,14 +79,14 @@ va2pa(Pde *pgdir, u_long va)//查页表，有则返回，无则返回全1
     pgdir = &pgdir[PDX(va)];
     if (!(*pgdir & PTE_V))//一级页表没找到
     {
-        
+        return ~0;
     }
-    p =    ;         //二级页表没找到
+    p = KADDR(PTE_ADDR(*pgdir));         //二级页表没找到
     if (!(p[PTX(va)] & PTE_V))
     {
-       
+       return ~0;
     }
-    return       ;
+    return PTE_ADDR(p[PTX(va)]);
 }
 
 //缺页异常时用来输出的
@@ -93,20 +94,20 @@ u_long
 va2pa_print(Pde *pgdir, u_long va)//查页表，有则返回，无则返回全1
 {
     Pte *p;
-    printf("\n@@@ tlb-va2pa: 0x%x   epc：0x%x\n",va,get_epc());
+    printf("\n@@@ tlb-va2pa: 0x%x   epc: 0x%x\n",va,get_epc());
 
     pgdir = &pgdir[PDX(va)];
-    if (       )   //一级页表没找到
+    if (!(*pgdir & PTE_V))   //一级页表没找到
     {
         return ~0;
     }
-    p = ();//二级页表没找到
-    if (       )
+    p = KADDR(PTE_ADDR(*pgdir));//二级页表没找到
+    if (!(p[PTX(va)] & PTE_V))
     {
         return ~0;
     }
     printf("tlb_va_found!\n", va);
-    return                     ;
+    return PTE_ADDR(p[PTX(va)]);
 }
 
 void print_illegal(int num)
@@ -119,7 +120,7 @@ void print_illegal(int num)
 void print_addr_error()
 {
     printf("\n### addr exception (see manual p120)###\n");
-    printf("### epc：0x%x  badaddr: 0x%x status: 0x%x\n",get_epc(),get_badaddr(),get_status());
+    printf("### epc: 0x%x  badaddr: 0x%x status: 0x%x\n", get_epc(), get_badaddr(), get_status());
     // while(1);
     env_free(curenv);
 
@@ -172,32 +173,30 @@ static void *alloc(u_int n, u_int align, int clear)
     }
 
     /* Step 1: Round up `freemem` up to be aligned properly. */
-    
+    freemem = ROUNDUP(freemem, align);
 
     /* Step 2: Save current value of `freemem` as allocated chunk. */
-    
+    alloced_mem = freemem;
 
     /* Step 3: Increase `freemem` to record allocation. */
-    
+    freemem += n;
 
     /* Step 4: Clear allocated chunk if parameter `clear` is set. */
     if (clear)
     {
-        
+        bzero((void *) alloced_mem, (size_t) n);
     }
 
     // We're out of memory, PANIC !!
     if (PADDR(freemem) >= maxpa)
     {
         panic("out of memorty\n");
-        
-
-
-
+        freemem -= n;   // restore allocated memory
+        return (void *) -E_NO_MEM;
     }
 
     /* Step 5: return allocated chunk. */
-    return        ;
+    return (void *) alloced_mem;
 }
 
 /**
@@ -219,8 +218,8 @@ static Pte *boot_pgdir_walk(Pde *pgdir, u_long va, int create)
      * Step 1: Get the corresponding page directory entry and page table.
      * Use KADDR and PTE_ADDR to get the page table from page directory entry value.
      */
-    pgdir_entryp =      ;                  // pgdir在vm_init()中分配，对应地址是虚拟地址
-    pgtable = (                ); // 存的是物理地址，转为虚拟地址
+    pgdir_entryp = &pgdir[PDX(va)];                  // pgdir在vm_init()中分配，对应地址是虚拟地址
+    pgtable = (Pte *) KADDR(PTE_ADDR(*pgdir_entryp)); // 存的是物理地址，转为虚拟地址
     /**
      * Step 2: If the corresponding page table is not exist and parameter `create`
      * is set, create one. And set the correct permission bits for this new page table.
@@ -229,8 +228,9 @@ static Pte *boot_pgdir_walk(Pde *pgdir, u_long va, int create)
     {
         if (create)
         {
-            pgtable =           ; //不是页分配
-            *pgdir_entryp =             ; // 由于页大小为4KB，所以物理地址的低12为本全为0，正好可以用于设置符号位.
+            pgtable = alloc(BY2PG, BY2PG, /*clear*/ 1); //不是页分配
+            // 此函数是启动时调用，页表还没有建好，不能使用alloc_page
+            *pgdir_entryp = PADDR(pgtable) | PTE_V | PTE_R; // 由于页大小为4KB，所以物理地址的低12为本全为0，正好可以用于设置符号位.
         }
         else
         {
@@ -238,8 +238,8 @@ static Pte *boot_pgdir_walk(Pde *pgdir, u_long va, int create)
         }
     }
     /* Step 3: Get the page table entry for `va`, and return it. */
-    pgtable_entry =              ;
-    return                       ;//返回页表项的物理地址的指针
+    pgtable_entry = &pgtable[PTX(va)];
+    return pgtable_entry;//返回页表项的物理地址的指针
 }
 
 /**
@@ -257,7 +257,7 @@ void boot_map_segment(Pde *pgdir, u_long va, u_long size, u_long pa, int perm)
     Pte *pgtable_entry;
 
     /* Step 1: Check if `size` is a multiple of BY2PG. */
-    if (             )
+    if (size % BY2PG != 0)
     {
         panic("pmap.c :134:size not aligned");
     }
@@ -268,10 +268,10 @@ void boot_map_segment(Pde *pgdir, u_long va, u_long size, u_long pa, int perm)
     pa_temp = pa;
     for (i = 0; i < size / BY2PG; i++)
     {
-       
-
-
-
+        pgtable_entry = boot_pgdir_walk(pgdir, va_temp, /*create*/ 1);
+        *pgtable_entry = PTE_ADDR(pa_temp) | perm | PTE_V;
+        va_temp += BY2PG;
+        pa_temp += BY2PG;
     }
 }
 
@@ -293,7 +293,7 @@ void vm_init()
     u_int n;
 
     /* Step 1: Allocate a page for page directory(first level page table). */
-    pgdir =           ;// 内核的一级页表！！！！
+    pgdir = alloc(BY2PG, BY2PG, 1);// 内核的一级页表！！！！
     printf("to memory %x for struct page directory. \n", pgdir);
     mCONTEXT = (int)pgdir;
     boot_pgdir = pgdir;
@@ -303,19 +303,20 @@ void vm_init()
      * physical address `pages` allocated before. For consideration of alignment,
      * you should round up the memory size before map.
      */
-    pages = (        ); // 给每个 物理 页的管理信息创建内存
+    pages = alloc(sizeof(struct Page) * npage, BY2PG, 1); // 给每个 物理 页的管理信息创建内存
     printf("to memory %x for struct Pages.\n", pages);
-    n = ROUND(               );
-    
+    n = ROUND(sizeof(struct Page) * npage, BY2PG);
+    boot_map_segment(pgdir, UPAGES, n, PADDR(pages), PTE_R);
 
     /**
      * Step 3, Allocate proper size of physical memory for global array `envs`,
      * for process management. Then map the physical address to `UENVS`.
      */
 
-    envs = (                              );
+    envs = alloc(sizeof(struct Env) * NENV, BY2PG, 1);
     printf("to memory %x for struct Pages.\n", envs);
-    n = ROUND(                               );
+    n = ROUND(sizeof(struct Env) * npage, BY2PG);
+    boot_map_segment(pgdir, UENVS, n, PADDR(envs), PTE_R);
     printf("mips_vm_init:boot_pgdir is %x\n", boot_pgdir);
     printf("pmap.c:\t mips vm init success\n");
 }
@@ -335,21 +336,28 @@ void page_init(void)
     int i = 0;
     /* Step 1: Initialize page_free_list. */
     /* Hint: Use macro `LIST_INIT` defined in include/queue.h. */
-    
+    LIST_INIT(&page_free_list);
 
 
 
 
     /* Step 2: Align `freemem` up to multiple of BY2PG. */
-    
+    freemem = ROUND(freenom, BY2PG);
 
     /* Step 3: Mark all memory blow `freemem` as used(set `pp_ref`
      * filed to 1) */
-   
+    for (; i < PADDR(freemem) / BY2PG; i++)
+    {
+        pages[i].pp_ref = 1;
+    }
 
 
     /* Step 4: Mark the other memory as free. */
-    
+        for (; i < npage; i++)
+    {
+        LIST_INSERT_HEAD(&page_free_list, &pages[i], pp_link);
+        pages[i].pp_ref = 0;
+    }
 
 
 }
@@ -371,17 +379,19 @@ int page_alloc(struct Page **pp)
 {
     struct Page *ppage_temp;
     /* Step 1: Get a page from free memory. If fails, return the error code.*/
-    
-
+    ppage_temp = LIST_FIRST(&page_free_list);  // first page of free memory
+    if(ppage_temp == NULL) {  // no free page!
+        return -E_NO_MEM;
+    }
 
 
     /**
      * Step 2: Initialize this page.
      *  use `bzero`.
      */
-                                    //get and turn for the *pp
-                                    // bzero *pp
-                                    //remove allocted page from free_list.
+    *pp = ppage_temp;                                //get and turn for the *pp
+    bzero((void *) page2kva(*pp), BY2PG);            // bzero *pp
+    LIST_REMOVE(ppage_temp, pp_link);        //remove allocted page from free_list.
     return 0;
 }
 
@@ -390,19 +400,20 @@ int page_alloc_share(struct Page **pp)
 {
     struct Page *ppage_temp;
     /* Step 1: Get a page from free memory. If fails, return the error code.*/
-   
-
-
+    ppage_temp = LIST_FIRST(&page_free_list);  // first page of free memory
+    if(ppage_temp == NULL) {  // no free page!
+        return -E_NO_MEM;
+    }
 
 
     /**
      * Step 2: Initialize this page.
      *  use `bzero`.
      */
-                                         //get and turn for the *pp
-                                         // bzero *pp
-                                        //remove allocted page from free_list.
-    return page2kva(*pp);
+    *pp = ppage_temp;                                //get and turn for the *pp
+    bzero((void *) page2kva(*pp), BY2PG);            // bzero *pp
+    LIST_REMOVE(ppage_temp, pp_link);        //remove allocted page from free_list.
+    return (int) page2kva(*pp);
 }
 
 // 共享内存
@@ -425,8 +436,8 @@ struct Page* create_share_vm(int key, size_t size)
         u_long r;
         u_long perm;
         /*Step 1: alloc a page. */
-        
-
+        perm = PTE_V | PTE_R;
+        // TODO
 
 
 
@@ -446,13 +457,13 @@ void* insert_share_vm(struct Env *e, struct Page *p)
     perm = PTE_V | PTE_R;
     /*Step 2: Use appropriate perm to set initial stack for new Env. */
     /*Hint: The user-stack should be writable? */
-    r = page_insert(      );  //TODO VA下移两个页
+    r = page_insert(e->env_pgdir, p, ???,perm      );  //TODO VA下移两个页
     if (r < 0)
     {
         printf("error,load_icode:page_insert failed\n");
         return NULL;
     }
-    e->heap_pc =                ;
+    e->heap_pc = e->heap_pc + ???;   // 堆向上生长
     int *result =               ;
     return result;
 }
@@ -467,17 +478,16 @@ void* insert_share_vm(struct Env *e, struct Page *p)
 void page_free(struct Page *pp)
 {
     /* Step 1: If there's still virtual address refers to this page, do nothing. */
-    if (           )
+    if (pp->pp_ref > 0)
     {
         return;
     }
 
     /* Step 2: If the `pp_ref` reaches to 0, mark this page as free and return. */
-    else if (              )
+    else if (pp->pp_ref == 0)
     {
-         
-
-
+        LIST_INSERT_HEAD(&page_free_list, pp, pp_link);
+        return;
     }
     else
         /* If the value of `pp_ref` less than 0, some error must occurred before, so PANIC !!! */
@@ -509,8 +519,8 @@ int pgdir_walk(Pde *pgdir, u_long va, int create, Pte **ppte)
     struct Page *ppage; // a temp point,help for ppte
 
     /* Step 1: Get the corresponding page directory entry and page table. */
-    pgdir_entryp =               ;//指向二级页表物理地址的指针
-    pgtable = (                 );//二级页表虚拟地址
+    pgdir_entryp = &pgdir[PDX(va)];//指向二级页表物理地址的指针
+    pgtable = (Pte *) KADDR(PTE_ADDR(*pgdir_entryp));//二级页表虚拟地址
 
     /* by the va, get the pa; again, by the pa, get the va of the two-level page table array */
     // use PTE_ADDR is because the low-12bit of pa is not all 0, need change.
@@ -520,22 +530,22 @@ int pgdir_walk(Pde *pgdir, u_long va, int create, Pte **ppte)
      * is set, create one. And set the correct permission bits for this new page table.
      * When creating new page table, maybe out of memory.
      */
-    if (                )  //没有二级页表
+    if (!(*pgdir_entryp & PTE_V))  //没有二级页表
     {
         if (create == 0)
         {
-            
-
+            *ppte = 0;
+            return 0;
         }
         else
         {     //alloc a page for page table.
-            if (          )
+            if (page_alloc(&ppage) != 0)
             { //cannot alloc a page for page table
-                
-
+                *ppte = 0;
+                return -E_NO_MEM;
             }
-            pgtable = (     );
-            *pgdir_entryp =                      ;//存的是物理地址
+            pgtable = (Pte *) KADDR(page2pa(ppage));
+            *pgdir_entryp = page2pa(ppage) | PTE_V | PTE_R;//存的是物理地址
             ppage->pp_ref++;
         }
     }
@@ -543,7 +553,7 @@ int pgdir_walk(Pde *pgdir, u_long va, int create, Pte **ppte)
     /* Step 3: Set the page table entry to `*ppte` as return value. */
     if (ppte)
     {
-        *ppte =              ;
+        *ppte = &pgtable[PTX(va)];
     }
     return 0;
 }
@@ -577,9 +587,9 @@ int page_insert(Pde *pgdir, struct Page *pp, u_long va, u_int perm)
 	}
 	
 	if (*pgtable_entry & PTE_V) {          //当前页表项有映射
-		if (                   ) {
+		if (pa2page(PTE_ADDR(*pgtable_entry)) != pp) {
 			// 插入的是同一个页面,后面固定加，这里先减
-			        
+			pp->pp_ref--;
 		}
 		else {
 			page_remove(pgdir, va);
@@ -605,7 +615,7 @@ page_lookup(Pde *pgdir, u_long va, Pte **ppte)
     Pte *pte;
 
     /* Step 1: Get the page table entry. */
-    
+    pgdir_walk(pgdir, va, 0, &pte);
 
 
       /* Check if the page table entry doesn't exist or is not valid. */
@@ -621,7 +631,10 @@ page_lookup(Pde *pgdir, u_long va, Pte **ppte)
     /* Step 2: Get the corresponding Page struct. */
 
                /* Use function `pa2page`, defined in include/pmap.h . */
-   
+    ppage = pa2page(PTE_ADDR(*pte));
+    if(ppte){
+        *ppte = pte;    // store PTE to *ppte
+    }
     return ppage;
 }
 
@@ -645,7 +658,7 @@ void page_remove(Pde *pgdir, u_long va)
 {
     Pte *pagetable_entry;
     struct Page *ppage;
-    ppage = (               );//查出va对应页表项
+    ppage = page_lookup(pgdir, va, &pagetable_entry);//查出va对应页表项
 
     if (ppage == 0)
     {
@@ -653,9 +666,12 @@ void page_remove(Pde *pgdir, u_long va)
     }
     printf("page_remove:va 0x%x  pa 0x%x\n",va,*pagetable_entry);
 
-                               //减引用
-    
-                               //tlb删除
+    ppage->pp_ref--;   //减引用
+    if(ppage->pp_ref==0){
+        page_free(ppage);   //如果引用数为0，释放页
+    }
+    *pagetable_entry = 0;   //pte删除
+    tlb_invalidate(pgdir, va);   //tlb删除
     return;
 }
 
@@ -666,14 +682,16 @@ void page_remove(Pde *pgdir, u_long va)
  */
 void tlb_invalidate(Pde *pgdir, u_long va)//
 {
-    
+    // TODO: which tlb function to call?
     if (curenv)
     {
-                           ;   // 假如不是释放当前进程，会有问题！
+        tlb_out((u_int) /*EntryHi*/ (PTE_ADDR(va) | GET_ENV_ASID(curenv->env_id)));
+        mips_tlbinval((tlbhi_t)  /*EntryHi*/ (PTE_ADDR(va) | GET_ENV_ASID(curenv->env_id)));   // 假如不是释放当前进程，会有问题！
     }
     else
     {
-        tlb_out(  );
+        tlb_out((u_int) /*EntryHi*/ PTE_ADDR(va));
+        mips_tlbinval((u_int) /*EntryHi*/ PTE_ADDR(va));
         printf(" PTE_ADDR(va) : %x \n", PTE_ADDR(va));
     }
 

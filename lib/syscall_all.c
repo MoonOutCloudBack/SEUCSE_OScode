@@ -157,7 +157,7 @@ int sys_mem_alloc(int sysno, u_int envid, u_int va, u_int perm)
 
 
 	// try to alloc a page
-	ret =        ;
+	ret = page_alloc(&ppage);
 	if (ret < 0)
 	{
 		printf("sys_mem_alloc:failed to alloc a page\n");

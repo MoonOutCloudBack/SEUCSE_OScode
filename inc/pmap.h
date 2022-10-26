@@ -10,9 +10,11 @@
 // 空闲内存链表 维护，管理剩余的物理内存 进程申请内存的时候，分配给它一页（4kB）
 // 在 MIPS CPU 中，地址转换以 4KB 大小为单位，称为页. 我们使用 Page 结构体
 // 来作为记录一页内存的相关信息的数据结构
+LIST_HEAD(FreePageList, Page);
+
 struct Page {
     // pp_link 是当前节点指向链表中下一个节点的指针，其类型为 LIST_ENTRY(Page)
-    struct Page* pp_link;      /* free list link */
+    LIST_ENTRY(Page) pp_link;      /* free list link */
 
     // pp_ref 用来记录这一物理页面的引用次数
     u_short pp_ref;
