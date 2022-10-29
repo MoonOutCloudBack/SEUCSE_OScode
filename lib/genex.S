@@ -131,8 +131,8 @@ NESTED(handle_reserved, TF_SIZE, sp)   # 从中断中恢复中断返回用户态
 	nop
 END(handle_reserved)
 
-FEXPORT(ret_from_exception)
-	.set noreorder
+FEXPORT(ret_from_exception) # 异常恢复
+	.set noreorder #禁止编译器优化指令顺序
 
 	RESTORE_ALL 
 	nop
@@ -145,7 +145,7 @@ FEXPORT(ret_from_exception)
 
 
 	nop
-nor_ret:             
+nor_ret:  # 非嵌套异常，使用 ERET 将 EXL 清零，返回用户态     
 	# STI
 	eret
 	nop
@@ -185,7 +185,7 @@ NESTED(handle_addr, TF_SIZE, sp)
 
 
 	                      # t0和立即数0X400相与，取出t0第10位，结果存t1，
-	j print_addr_error
+	j print_addr_error    # 进程模块中实现的函数
 	
 	nop
 END(handle_addr)
@@ -240,7 +240,7 @@ button_deal:
 	nop
 
 
-timer_irq:
+timer_irq: # 用来清空计时器并调用 sched_yield 函数
 	nop
 	# 处理定时器
 

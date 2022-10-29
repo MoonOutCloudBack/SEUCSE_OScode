@@ -17,7 +17,7 @@ NESTED(handle_sys,TF_SIZE, sp)
                                      # v0 = v0 - __SYSCALL_BASE，得到相对偏移
                                      # _if(v0 < __NR_SYSCALLS+1) t0=1 else t0=0  __NR_SYSCALLS是系统调用总个数
 
-    #  set epc as epc plus 4
+    #  set epc as epc plus 4 对于系统调用异常来说，处理返回地址是下一条指令的地址，而非当前指令的地址
     #  Where is the next being exectued cpu instruction when return from exception?
     
 

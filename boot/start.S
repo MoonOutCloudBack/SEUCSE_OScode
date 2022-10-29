@@ -45,7 +45,7 @@ _mips_general_exception:  # 中断处理地址
 		sw		sp, kernel_sp 
 		mfc0	k1,CP0_CAUSE
 		
-		la	k0, exception_handlers 
+		la	k0, exception_handlers # la命令应该是加载内存地址
 
 
 		/*
@@ -59,7 +59,7 @@ _mips_general_exception:  # 中断处理地址
 		 #把内存中k0地址处的值赋给k0
 
 		nop
-		 #跳到对应中断处理地址
+		 #跳到对应中断处理地址,上下文的保存应该是由各自的处理程序完成的，因为不同的异常对上下文保存的要求不同
 	
 		nop
 		# END(except_vec3)
@@ -67,7 +67,7 @@ _mips_general_exception:  # 中断处理地址
 		# .set	pop
 
 
-.data
+.data #数据段开始标志
 			.globl kernel_sp		#save the sp register when exception occur
 kernel_sp:
 			.word 0
@@ -77,8 +77,8 @@ mCONTEXT:
 			.word 0
 
 			.globl exception_handlers
-exception_handlers:
-			.word 0:31
+exception_handlers: # 应该就是中断向量的入口地址，从这里开始按中断号索引可以找到每个中断的处理地址
+			.word 0:31 #.word就是指在这里放一个常量,exception_handlers是其地址（31表示连续放31个0）
 
 			.globl delay
 delay:
@@ -96,7 +96,7 @@ curtf:
 
 
 
-.text
+.text #代码段开始标志
 LEAF(_start)
 
 	.set	reorder

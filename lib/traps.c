@@ -2,6 +2,7 @@
 #include <env.h>
 #include <printf.h>
 
+// 这里导入了 genex.S 中定义的各异常处理函数
 extern void handle_int();
 extern void handle_reserved();
 extern void handle_tlb();
@@ -20,6 +21,7 @@ void trap_init()
         set_except_vector(i, handle_reserved);
     }
 
+    // 虽然中断向量表设置了32大小，但是这里只用到了其中几个异常处理
     set_except_vector(0, handle_int); 
     set_except_vector(1, handle_mod);
     set_except_vector(2, handle_tlb); 
