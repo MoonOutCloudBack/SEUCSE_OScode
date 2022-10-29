@@ -150,7 +150,7 @@ handle_finish:
 		.set at                           	
 
 
-		lw	v1,TF_LO(sp)    # v1是子程序返回值寄存器                                   
+		lw	v1,TF_LO(sp)    # v1是子程序返回值寄存器,恢复之前先借用v0和v1用一下                                   
 		mtlo	v1     # 写Lo寄存器 LO <- GPR[v1]                         
 		lw	v0,TF_HI(sp)                     
 		lw	v1,TF_EPC(sp)                    

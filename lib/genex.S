@@ -134,23 +134,27 @@ END(handle_reserved)
 FEXPORT(ret_from_exception) # 异常恢复
 	.set noreorder #禁止编译器优化指令顺序
 
-	RESTORE_ALL 
+	RESTORE_ALL
 	nop
 	# 判断是否嵌套
-	
-
-
-
-
-
+	# 判断引起该异常的EPC是否位于内核区域，恢复的EPC应该就是引起正在处理的该异常的引发地址(其他寄存器保存的是)
+	mfc0	k1,CP0_EPC,2 # k1存储EPC，即处理结束后的返回地址
+	li	k0,-0x80000000
+	addu k0,k1
+	bgez k0,core_ret # 如果是嵌套，跳转至 core_ret 进行处理
 
 	nop
 nor_ret:  # 非嵌套异常，使用 ERET 将 EXL 清零，返回用户态     
 	# STI
 	eret
+	j cont
 	nop
-core_ret:
-	j k1
+core_ret: # 嵌套异常
+	# 恢复上一个异常的EPC 是否还需要恢复其他CP0寄存器？
+	lw	k0,TF_EPC(sp)
+	mtc0	k0,CP0_EPC 
+cont: # continue
+	j k1 # 跳转回发生异常的地址继续执行
 	nop
 	# 若是用户态 --> 内核态，则 k0 = sp, sp = *kernelsp - PT_SIZE，store k0, PT_R29(sp)，保存其它寄存器
 	# 若是内核态 --> 内核态，直接 k0 = sp, sp = sp - PT_SIZE，store k0, PT_R29(sp)，然后保存其它寄存器
