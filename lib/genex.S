@@ -179,12 +179,11 @@ NESTED(handle_addr, TF_SIZE, sp)
 	li		sp,0x80400000#切到内核SP  
 	# CLI
 	.set at # 开启at寄存器警告
-	                       # 取出上一次exception的cause
-	                       # 取出Processor status
+	mfc0 t0, CP0_CAUSE     # 取出上一次exception的cause
+	mfc0 t2, CP0_STATUS    # 取出Processor status
+	and t0, t2 # IM位和IP位与运算
 
-
-
-	                      # t0和立即数0X400相与，取出t0第10位，结果存t1，
+	andi t1, t0, STATUSF_IP0  # t0和立即数0X400相与，取出t0第10位(IP1&IM1)，结果存t1，
 	j print_addr_error    # 进程模块中实现的函数
 	
 	nop
