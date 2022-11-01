@@ -22,7 +22,7 @@ LEAF(tlb_out) # 现在是一次清两
 	nop    # 找到对应物理页
 
 	
-	mtc0	zero,CP0_ENTRYLO0#把两个都清空了
+	mtc0	zero,CP0_ENTRYLO0	# 把两个都清空了
 	mtc0	zero,CP0_ENTRYLO1
 	
 	nop
