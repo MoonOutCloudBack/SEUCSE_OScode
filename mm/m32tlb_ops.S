@@ -46,11 +46,11 @@ LEAF(mips_tlbwi2)
 #if _MIPS_SIM==_ABIO32
 	lw	ta0, 16(sp)
 #endif
-	mtc0	a0, 
-	mtc0	a1, 
-	mtc0	a2, 
-	mtc0	a3, 
-	mtc0	ta0, 
+	mtc0	a0, C0_ENTRYHI
+	mtc0	a1, C0_ENTRYLO0
+	mtc0	a2, C0_ENTRYLO1
+	mtc0	a3, C0_PAGEMASK
+	mtc0	ta0, C0_INDEX
 	ehb				# mtc0, Hazard on tlbwi
 
 	tlbwi
@@ -70,10 +70,10 @@ END(mips_tlbwi2)
  *
  */
 LEAF(mips_tlbwr2)
-	mtc0	a0, 
-	mtc0	a1, 
-	mtc0	a2, 
-	mtc0	a3, 
+	mtc0	a0, C0_ENTRYHI
+	mtc0	a1, C0_ENTRYLO0
+	mtc0	a2, C0_ENTRYLO1
+	mtc0	a3, C0_PAGEMASK
 
 	ehb				# mtc0, hazard on tlbwr
 	tlbwr
@@ -92,23 +92,23 @@ END(mips_tlbwr2)
  *
  */
 LEAF(mips_tlbrwr2)
-	mfc0	t0, 
-	mtc0	a0,
+	mfc0	t0, C0_ENTRYHI
+	mtc0	a0, C0_ENTRYHI
 	ehb		# MTCO, hazard on tlbp
 
 	tlbp
 	ehb		# tlbp, hazard on MFCO C0_INDEX
 
-	mfc0	v0,
-	mtc0	a1, 
-	mtc0	a2, 
-	mtc0	a3, 
+	mfc0	v0, C0_INDEX
+	mtc0	a1, C0_ENTRYLO0
+	mtc0	a2, C0_ENTRYLO1
+	mtc0	a3, C0_PAGEMASK
 
 	ehb		# mtc0, hazard on tlbwi
 	bltz	v0, 1f	# no matching entry
 
 	tlbwi
-	mtc0	t0, 
+	mtc0	t0, C0_ENTRYHI	# restore entry hi
 	.set	push
 	.set	noreorder
 	jr.hb	ra
@@ -116,7 +116,7 @@ LEAF(mips_tlbrwr2)
 	.set	pop
 
 1:	tlbwr
-	mtc0	t0, 
+	mtc0	t0, C0_ENTRYHI	# restore entry hi
 	.set	push
 	.set	noreorder
 	jr.hb	ra
@@ -342,20 +342,20 @@ AENT(m64_tlbinvalall)
 	 */
 
 	# Clear VTLB
-	
-
-
-
-
-
+	mtc0	zero, C0_INDEX
+	ehb
+	.set	push
+	.set	mips32r3
+	.set	eva
+	tlbinvf
 	.set	pop
 
 	# v0 contains number of TLB entries
 	# v1 contains number of sets per way
-	                     	# Fetch the tlb stride for
-	                        # stepping through FTLB sets.
-	
-	                    	# End pointer
+	lui		t9, %hi(__tlb_stride_length)	# Fetch the tlb stride for
+	addiu	t9, %lo(__tlb_stride_length)	# stepping through FTLB sets.
+	mul		v1, v1, t9
+	subu	t2, v0, v1	# End pointer
 
 12:	subu	v0, v0, t9
 	mtc0	v0, C0_INDEX
@@ -453,39 +453,47 @@ END(mips_tlbinvalall)
 LEAF(mips_tlb_size)
 AENT(m64_tlb_size)
 	/* first see if we've got a TLB */
-	
+	mfc0	t0, C0_CONFIG
+	mfc0	t1, C0_CONFIG1
+	move	v0, zero
+	# MOVE is an assembler pseudo instruction
+	# move $rt, $rs is encoded as addi $rt, $rs, 0
 
-
-
+	ext	t0, t0, CFG0_MT_SHIFT, CFG0_MT_BITS
 	# No MMU test, 0 entries
-	
+	li		t2, (CFG0_MT_NONE >> CFG0_MT_SHIFT)
+	beq		t0, t2, 9f
 
 
 
 	# Fixed Address Translation, 0 entries
-	
+	li		t2, (CFG0_MT_FIXED >> CFG0_MT_SHIFT)
+	beq		t0, t2, 9f
 
 
 
 	# Block Address Translator, 0 entries
-	
+	li		t2, (CFG0_MT_BAT >> CFG0_MT_SHIFT)
+	beq		t0, t2,	9f
 
 
 
 	# (D)TLB or not ?
-	
-
+	andi	t2, t0, (CFG0_MT_DUAL | CFG0_MT_TLB >> CFG0_MT_SHIFT)
+	beqz	t2, 9f
 
 
 	# As per PRA, field holds No. of entries -1
 	# Standard TLBs and Dual TLBs have extension fields.
-	
+	ext		v0, t1, CFG1_MMUS_SHIFT, CFG1_MMUS_BITS
+	addiu	v0, v0, 1
 
+	# check existence of Config4
+	mfc0	t1, C0_CONFIG3
+	ext		t1, t1, CFG3_M_SHIFT, 1
+	beqz	t1, 9f
 
-
-
-
-
+	mfc0	t1, C0_CONFIG4
 
 #if __mips_isa_rev < 6
 	ext	t3, t1, CFG4_MMUED_SHIFT, CFG4_MMUED_BITS

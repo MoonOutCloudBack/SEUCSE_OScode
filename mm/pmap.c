@@ -25,8 +25,9 @@ struct HashTable ht;
 
 u_long getNextTlb()//要写的下一个tlb
 {
-    printf("nexttlb:%d\n",tlbCount);
     //TODO
+    tlbCount = mips_tlb_size();
+    printf("nexttlb:%d\n",tlbCount);
     int ret = tlbCount;
     tlbCount = (tlbCount + 1) % maxTLB;
     return ret;
@@ -259,7 +260,7 @@ void boot_map_segment(Pde *pgdir, u_long va, u_long size, u_long pa, int perm)
     /* Step 1: Check if `size` is a multiple of BY2PG. */
     if (size % BY2PG != 0)
     {
-        panic("pmap.c :134:size not aligned");
+        panic("pmap.c: size not aligned");
     }
 
     /* Step 2: Map virtual address space to physical address. */
@@ -342,7 +343,7 @@ void page_init(void)
 
 
     /* Step 2: Align `freemem` up to multiple of BY2PG. */
-    freemem = ROUND(freenom, BY2PG);
+    freemem = ROUND(freemem, BY2PG);
 
     /* Step 3: Mark all memory blow `freemem` as used(set `pp_ref`
      * filed to 1) */
@@ -417,9 +418,9 @@ int page_alloc_share(struct Page **pp)
 }
 
 // 共享内存
+// TODO: Implement this!
 struct Page* create_share_vm(int key, size_t size)
 {
-    
     struct Page* value = NULL;
     value = tryHashTableFind(&ht, key, value);
     if( value != NULL)
@@ -450,6 +451,7 @@ struct Page* create_share_vm(int key, size_t size)
 }
 
 //共享内存页加入当前虚拟地址中
+// TODO: Implement this!
 void* insert_share_vm(struct Env *e, struct Page *p)
 {
     u_long perm;
@@ -685,12 +687,12 @@ void tlb_invalidate(Pde *pgdir, u_long va)//
     // TODO: which tlb function to call?
     if (curenv)
     {
-        tlb_out((u_int) /*EntryHi*/ (PTE_ADDR(va) | GET_ENV_ASID(curenv->env_id)));
+        // tlb_out((u_int) /*EntryHi*/ (PTE_ADDR(va) | GET_ENV_ASID(curenv->env_id)));
         mips_tlbinval((tlbhi_t)  /*EntryHi*/ (PTE_ADDR(va) | GET_ENV_ASID(curenv->env_id)));   // 假如不是释放当前进程，会有问题！
     }
     else
     {
-        tlb_out((u_int) /*EntryHi*/ PTE_ADDR(va));
+        // tlb_out((u_int) /*EntryHi*/ PTE_ADDR(va));
         mips_tlbinval((u_int) /*EntryHi*/ PTE_ADDR(va));
         printf(" PTE_ADDR(va) : %x \n", PTE_ADDR(va));
     }
