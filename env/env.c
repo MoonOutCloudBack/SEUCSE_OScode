@@ -35,10 +35,11 @@ u_int mkenvid(struct Env *e)
 	static u_int next_env_id = 0;
 
 	/*Hint: lower bits of envid hold e's position in the envs array. */
-	
+	u_int low = e - envs;
 
 	/*Hint:  high bits of envid hold an increasing number. */
-	
+	++next_env_id;
+	return (next_env_id << (1 + LOG2NENV)) | low;
 
 }
 
@@ -61,13 +62,14 @@ int envid2env(u_int envid, struct Env **penv, int checkperm)
 	/*Step 1: Assign value to e using envid. */
 	if (envid == 0)
 	{
-		
-
+		*penv = curenv;
+		return 0;
 	}
 	e = envs + GET_ENV_ASID(envid); 
 	if (e->env_status == ENV_FREE || e->env_id != envid) //todo 为什么检查free，这个函数啥时候调用
 	{
-	
+		*penv = 0;
+		return -E_BAD_ENV;
 	}
 	/* Hint:
  *      *  Check that the calling environment has legitimate permissions
@@ -78,7 +80,11 @@ int envid2env(u_int envid, struct Env **penv, int checkperm)
 	/*Step 2: Make a check according to checkperm. */
 	if (checkperm)
 	{
-		
+		if (e != curenv && e->env_parent_id != curenv->env_id)
+		{
+			*penv = 0;
+			return -E_BAD_ENV;
+		}
 	}
 	*penv = e;
 	return 0;
@@ -90,7 +96,11 @@ void env_init(void)
 	int i;
 	for (i = NENV - 1; i >= 0; i--)
 	{
-
+		envs[i].env_id = 0XFFFFFFFF;
+		envs[i].env_status = ENV_FREE;
+		envs[i].env_link = env_free_list;
+		env_free_list = &envs[i];
+		envs[i].heap_pc=UTOP;
 		
 	}
 }
@@ -107,17 +117,25 @@ env_setup_vm(struct Env *e)
 	/*Step 1: Allocate a page for the page directory using a function you completed in the lab2.
        * and add its reference.
        *pgdir is the page directory of Env e, assign value for it. */
-	
+	if ((r = page_alloc(&p)) < 0)
+	{ /* Todo here*/
+		panic("env_setup_vm - page alloc error\n");
+		return r;
+	}
+	p->pp_ref++;
+	pgdir = (Pde *)(page2kva(p));
 
 	/*Step 2: Zero pgdir's field before UTOP. */
-	
-
+	for (i = 0; i < PDX(UTOP); i++)
+	{
+		pgdir[i] = 0x0;
+	}
 
 	/*VPT and UVPT map the env's own page table, with
  *      *different permissions. */
 
-	e->env_pgdir[PDX(VPT)] =                            ; 
-	e->env_pgdir[PDX(UVPT)] =                           ;
+	e->env_pgdir[PDX(VPT)] = e->env_cr3  ; 
+	e->env_pgdir[PDX(UVPT)] = e->env_cr3 | PTE_V | PTE_R ;
 	return 0;
 }
 
@@ -147,25 +165,35 @@ int env_alloc(struct Env **new, u_int parent_id)
 	struct Env *e;
 
 	/*Step 1: Get a new Env from env_free_list*/
-	
+	e = env_free_list;
+	if (e == NULL) 
+	{ 
+		return -E_NO_FREE_ENV; 
+	}	
 
 
 	/*Step 2: Call certain function(has been implemented) to init kernel memory layout for this new Env.
      *The function mainly maps the kernel address to this new Env address. */
-	
+	env_setup_vm(e);
 
 
 	/*Step 3: Initialize every field of new Env with appropriate values*/
-	
+	e->env_id = mkenvid(e);
+	e->env_parent_id = parent_id;
+	e->env_status = ENV_RUNNABLE;
 
 
 	/*Step 4: focus on initializing env_tf structure, located at this new Env. 
      * especially the sp register,CPU status. */
-	
-
+	e->env_tf.cp0_status = 0x10007c01;
+	e->env_tf.regs[29] = USTACKTOP; //栈顶
+	e->env_tf.regs[31] = 0x90000000; //返回地址（指向结束的系统调用）
+	e->env_runs = 0;
 
 	/*Step 5: Remove the new Env from Env free list*/
-	
+	env_free_list = env_free_list->env_link;
+	*new = e;
+	return 0;
 
 }
 
@@ -175,32 +203,42 @@ int env_alloc_arg(struct Env **new, u_int parent_id, char *arg)
 	struct Env *e;
 
 	/*Step 1: Get a new Env from env_free_list*/
-	
+	e = env_free_list;
+	if (e == NULL) 
+	{ 
+		return -E_NO_FREE_ENV; 
+	}	
 
 
 	/*Step 2: Call certain function(has been implemented) to init kernel memory layout for this new Env.
      *The function mainly maps the kernel address to this new Env address. */
-	
+	env_setup_vm(e);
 
 
 	/*Step 3: Initialize every field of new Env with appropriate values*/
-	
+	e->env_id = mkenvid(e);
+	e->env_parent_id = parent_id;
+	e->env_status = ENV_RUNNABLE;
 
 
 	/*Step 4: focus on initializing env_tf structure, located at this new Env. 
      * especially the sp register,CPU status. */
-	
-
-
+	e->env_tf.cp0_status = 0x10007c01;
+	e->env_tf.regs[29] = USTACKTOP; //栈顶
+	e->env_tf.regs[31] = 0x90000000; //返回地址（指向结束的系统调用）
+	e->env_runs = 0;
 
 	/*Step 5: Remove the new Env from Env free list*/
-
+	env_free_list = env_free_list->env_link;
 
 	if (arg)
 	{
 		e->env_tf.regs[4] = 1;
 		e->env_tf.regs[5] = arg;
 	}
+
+	*new = e;
+
 	return 0;
 }
 
@@ -255,9 +293,9 @@ uint32_t load_elf_mapper(char *elf_name, struct Env *e)
 		{
 			printf("Loading %d KB to memory address \r", fsize / 1024);
 		}
-		fr = (                ); // Read a chunk of source file
-		
-
+		fr = f_read(&fil, buf, SD_READ_SIZE, &br); // Read a chunk of source file
+		buf += br;
+		fsize += br;
 
 	} while (!(fr || br == 0));
 
@@ -268,17 +306,17 @@ uint32_t load_elf_mapper(char *elf_name, struct Env *e)
 	int pre_curtf = curtf;
 	int pre_asid = curenv->env_id;
 
-	lcontext(                       ); // 切换到要新建的进程的asid，之后缺页中断会填这个进程的tlb
-	set_asid(                       );
+	lcontext(e->env_pgdir,0); // 切换到要新建的进程的asid，之后缺页中断会填这个进程的tlb
+	set_asid(GET_ENV_ASID(e->env_id));
 
 	// read elf
-	if (                        )
+	if(br = load_elf_sd(boot_file_buf, fil.fsize))
 		printf("elf read failed with code %d \n\r", br);
 
 	
 	uint32_t entry_point = get_entry(boot_file_buf, fil.fsize);
-	lcontext(                      );
-	set_asid(                      );    // 这里和上面是一对的
+	lcontext(pre_pgdir, pre_curtf);
+	set_asid(GET_ENV_ASID(pre_asid));    // 这里和上面是一对的
 
 	printf("\nfinish load elf!\n");
 
@@ -317,16 +355,19 @@ load_icode(struct Env *e, char *elf_name)
 	u_long r;
 	u_long perm;
 	/*Step 1: alloc a page. */
-	
-
-
-
+	r = page_alloc(&p);
+	p->pp_ref++;
+	if (r < 0)
+	{
+		printf("ERROR in load_icode:page_alloc failed\n");
+		return;
+	}
 
 
 	/*Step 2: Use appropriate perm to set initial stack for new Env. */
 	/*Hint: The user-stack should be writable? */
-	
-
+	perm = PTE_V | PTE_R;
+	page_insert(e->env_pgdir,p,USTACKTOP-BY2PG,perm);
 
 
 
@@ -354,14 +395,15 @@ void env_create_priority(char *binary, int priority)
 	int r;
 	extern void debug();
 	/*Step 1: Use env_alloc to alloc a new env. */
-	
-
-
-
-
+	r = env_alloc(&e, 0);
+	if (r < 0)
+	{
+		panic("sorry, env_create_priority:env_alloc failed");
+		return;
+	}
 
 	/*Step 2: assign priority to the new env. */
-	
+	e->env_pri = priority;
 
 	/*Step 3: Use load_icode() to load the named elf binary. */
 	printf("load_icode:%s\n", binary);
@@ -392,14 +434,14 @@ void env_create_priority_arg(char *binary, int priority, char *arg)
 	int r;
 	extern void debug();
 	/*Step 1: Use env_alloc to alloc a new env. */
-	r = (                    );
+	r = (r = env_alloc(&e, 0));
 	if (r < 0)
 	{
 		panic("sorry, env_create_priority:env_alloc failed");
 		return;
 	}
 	/*Step 2: assign priority to the new env. */
-	
+	e->env_pri = priority;
 
 	/*Step 3: Use load_icode() to load the named elf binary. */
 	printf("load_icode:%s\n", binary);
@@ -439,14 +481,15 @@ void env_create_share(char *binary, int num, int priority)
 	int r;
 	extern void debug();
 	/*Step 1: Use env_alloc to alloc a new env. */
-	r = (                 );
+	r = (r = env_alloc(&e, 0));
 	if (r < 0)
 	{
 		panic("sorry, env_create_priority:env_alloc failed");
 		return;
 	}
 	/*Step 2: assign priority to the new env. */
-	
+	e->env_pri = priority;
+
 	/*Step 3: Use load_icode() to load the named elf binary. */
 	printf("load_icode:%s\n", binary);
 	if(      )
@@ -513,7 +556,7 @@ void pthread_create(void *func, int arg)
 	1. 堆（无）  全局变量 静态变量
 	2. 文件控制块 elf代码的入口地址
 */
-void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg)
+void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg) // 不确定
 {
 	Pte *pt;
 	u_int pdeno, pteno, pa;
@@ -529,30 +572,33 @@ void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg)
 		return r;
 	}
 	p->pp_ref++;
-	pgdir = (                  );
+	pgdir = (Pde *)(page2kva(p));
 	printf("### e->CONTEXT: 0x%x \n", pgdir);
-	e->env_pgdir = (           );
+	e->env_pgdir = pgdir;
 	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++)
 	{
 		/* Hint: only look at mapped page tables. */
-		  
-
+		if (!(env_src->env_pgdir[pdeno] & PTE_V)) 
+		{ 
+			e->env_pgdir[pdeno] = 0; 
+			continue; 
+		}
 
 		/* Hint: find the pa and va of the page table. */
-		                                  //拷贝二级页表地址
+		e->env_pgdir[pdeno] = env_src->env_pgdir[pdeno];//拷贝二级页表地址
 		printf("content:0x%x\n", e->env_pgdir[pdeno]);
-		                                  //源二级页表物理地址
-		                        		  //源二级页表虚拟地址
-		                             	  //增加二级页表物理引用
+		pa = PTE_ADDR(env_src->env_pgdir[pdeno]);   //源二级页表物理地址
+		pt = (Pte *)KADDR(pa);  //源二级页表虚拟地址
+		pa2page(pa)->pp_ref++;//增加二级页表物理引用
 
 
 		/* Hint: Unmap all PTEs in this page table. */
 		for (pteno = 0; pteno <= PTX(~0); pteno++) //
 		{
-			if (  )
+			if (pt[pteno] & PTE_V)
 			{
-				 
-
+				int pa_tmp = PTE_ADDR(pt[pteno]); 
+				pa2page(pa_tmp)->pp_ref++;
 			}
 		}
 	}
@@ -563,16 +609,17 @@ void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg)
 		{
 			break;
 		}
-		pa = PTE_ADDR(            ); //源二级页表物理地址
-		pt =            ;				//源二级页表虚拟地址
-		                ;				//减少二级页表物理引用
+		pa = PTE_ADDR(env_src->env_pgdir[pdeno]); //源二级页表物理地址
+		pt = (Pte *)KADDR(pa);				//源二级页表虚拟地址
+		pa2page(pa)->pp_ref--;				//减少二级页表物理引用
 
 		for (pteno = 0; pteno <= PTX(~0); pteno++) 
 		{
-			
-
-
-
+			if (pt[pteno] & PTE_V)
+			{
+				int pa_tmp = PTE_ADDR(pt[pteno]); 
+				pa2page(pa_tmp)->pp_ref--;
+			}
 		}
 		e->env_pgdir[pdeno] = 0;
 	}
@@ -602,34 +649,38 @@ int env_free(struct Env *e)
 	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++)
 	{
 		/* Hint: only look at mapped page tables. */
-		
-
-
+		if (!(e->env_pgdir[pdeno] & PTE_V)) 
+		{ 
+			continue; 
+		}
 
 
 		/* Hint: find the pa and va of the page table. */
-		pa =                 ;              //物理地址
-		pt =                 ;				//虚拟地址
+		pa = PTE_ADDR(e->env_pgdir[pdeno]);              //物理地址
+		pt = (Pte *)KADDR(pa);				//虚拟地址
 
 		/* Hint: Unmap all PTEs in this page table. */
-		for (                 )
+		for (pteno = 0; pteno <= PTX(~0); pteno++)
 		{
-			if (               )
+			if (pt[pteno] & PTE_V) 
 			{
-				page_remove(                 );
+				page_remove(e->env_pgdir, (pdeno << PDSHIFT) | (pteno << PGSHIFT));
 			}
 		}
 
 		/* Hint: free the page table itself. */
-		
+		e->env_pgdir[pdeno] = 0; 
+		page_decref(pa2page(pa));
+
 
 
 	}
 	/* Hint: free the page directory. */
-	pa =            ;
-	                ;
-	                ;
-	page_decref(   );
+	pa = e->env_cr3; 
+	e->env_pgdir = 0; 
+	e->env_cr3 = 0; 
+	page_decref(pa2page(pa));
+
 
 
 
@@ -657,7 +708,7 @@ int env_free(struct Env *e)
 	                     //从env_runnable里删去e
 
 	                     //保存下来下一个
-	e->env_link =        ;
+	e->env_link = env_free_list;
 	env_free_list = e;
 
 	if (e == curenv)
@@ -693,7 +744,7 @@ void env_run(struct Env *e)
 	curenv = e;
 	curenv->env_runs++;
 	/*Step 3: Use lcontext() to switch to its address space. */
-
+	lcontext((curenv->env_pgdir), &(curenv->env_tf));
 
 	printf("### curenv-> ID: 0x%x  CONTEXT: 0x%x \n", curenv->env_id, curenv->env_pgdir);
 	printf("### curenv-> env_runs: %d nextenv->env_id: 0x%x\n", curenv->env_runs, curenv->env_link->env_id);
@@ -704,7 +755,9 @@ void env_run(struct Env *e)
      * the   environment.
      */
 	/* Hint: You should use GET_ENV_ASID there.Think why? */
-	
+	set_asid(GET_ENV_ASID(curenv->env_id)); 
+	env_pop_tf(&(curenv->env_tf)); 
+
 
 }
 

@@ -24,10 +24,10 @@ void sched_yield()
 
 
 	struct Env *e=curenv;
-	if(                  )              //第一次进时间中断
+	if(curenv==NULL)              //第一次进时间中断
 	{
 		
-
+		e=env_runnable_head; 
 		printf("****************** first sched ******************* \n");
 	}
 	else
@@ -37,14 +37,13 @@ void sched_yield()
 		struct Env *tempE=env_runnable_head;
 		do{
 			
-
-
-
+			if(tempE->env_pri>highestPt)highestPt=tempE->env_pri; 
+			tempE=tempE->env_link;
 
 		}while(tempE!=env_runnable_head);
 		do{
 			
-
+			e=e->env_link; 
 
 		}while(e->env_pri<highestPt);
 
