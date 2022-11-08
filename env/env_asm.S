@@ -12,11 +12,20 @@ KERNEL_SP:
 	.text
 	.set noat
 	
+# 虽然不知道什么意思，但还是抄了指导手册的代码
 LEAF(env_pop_tf)
 	.set noreorder
 
-	move	k0, a0			# k0 = &(curenv->env_tf)
+	# 有些版本会改 sp 和 ra（stack pointer, return addr）
+	# sp：先 addi sp,sp,-32   在最末尾又 addi sp,sp,32
+	# ra：先 sw ra,28(sp)     在最末尾又 lw ra,28(sp)       然后 jr ra
+	# 虽然我并不懂
 
+
+	# 首先得到 要恢复进程的上下文地址 &env_tf 的基址
+	move	k0, a0			# k0 = &(curenv->env_tf), k0 - k7 是 kernel registers
+
+	# 从该基址加载 CP0 的状态寄存器
 	lw 		k1, TF_CAUSE(k0)
 	mtc0	k1, C0_CAUSE
 	lw		v1,	TF_LO(k0)
@@ -24,10 +33,11 @@ LEAF(env_pop_tf)
 	lw		v0,	TF_HI(k0)
 	mthi	v0	
 	lw 		v1, TF_EPC(k0)
-	# li		v1,0x15001f90
+	# li		v1, 0x15001f90
 	mtc0	v1,	C0_EPC
 	ehb
 
+	# 从该基址加载各个通用寄存器
 	lw		$31,TF_REG31(k0)
 	lw		$30,TF_REG30(k0)
 	lw		$29,TF_REG29(k0)															
@@ -59,16 +69,22 @@ LEAF(env_pop_tf)
 	lw		$1,TF_REG1(k0)
 	
 
-	# todo  开启中断，设为用户模式
-	
-
-
-
-
-
+	# 开启中断，设为用户模式
+	mfc0	k0, C0_STATUS		# 读到 status
+	li		k1, 0x11			# 设为 USER MODE, 并开启中断
+	# status 第 0 位是 IE 中断使能，1 为可以中断（IE = 1，EXL = 0，ERL = 0，才可以中断）
+	# status 第 4 位是 UM 用户模式，0 表示 kernal mode，1 表示 user mode
+	or		k0, k1				# or 一下，置几个 1
+	li		k1, 0xEFDFFFFF
+	# status 第 28 位（那个 E 置零的位）是 CU0，表示是否允许控制 CP0，允许则 CU0 = 1
+	# user mode 大概是不允许的
+	# status 第 21 位（那个 D 置零的位）是 TS，表示 TLB 是否被关闭，发生 TLB 严重错误时 TS = 1
+	and		k0, k1				# and 一下，置几个 0
+	mtc0	k0, C0_STATUS		# 把 status 写回去
 
 	ehb
-	eret # 回epc
+	eret						# 回 epc
+								# eret 明明是回 ErrorEPC，不过代码都这样给了，应该可以跑通吧
 	nop
 
 
@@ -122,6 +138,9 @@ END(get_badaddr)
 
 LEAF(get_asid)
 	mfc0 	v0, C0_ENTRYHI
+	# asid：Adress Space ID
+	# 当前进程的 asid 放在 CP0 寄存器 EntryHI 里
+	# 参考：https://www.cnblogs.com/Melles/p/10714224.html
 	jr	ra
 	nop
 END(get_asid)

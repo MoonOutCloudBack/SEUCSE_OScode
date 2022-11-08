@@ -7,10 +7,10 @@ load elf 的逻辑:
 - 先得到 elf 头表, 然后索引 elf 头, 得到每个程序段的头表
 - 然后 for 循环 读每个程序段的头表, 根据记录的 程序段长度、内存地址、分配给它的内存的长度 等等信息, 挨个 load
 
-说个悲伤的事情:
-- 最初的框架代码中, 貌似并没有给 1. 加载 elf 到内存缓冲区, 2. 把 elf 解析到 RAM 中的代码
-- (虽然指导手册说给了)
+指导手册中说的 1. 把 elf 先读到内存缓冲区 + 2. 调用 load_elf() 的代码，
+在 env/env.c 的 load_elf_mapper() 函数里
 */
+
 
 static void *memSet(void *s, int c, size_t n)
 {

@@ -156,6 +156,8 @@ init_resources:                 # initializes resources for "cpu".
     # Return from exception will now execute code in main
     eret                        # Exit reset exception handler and start execution of _start.
     # eret 指令：exception return，使用 ErrorEPC 寄存器作为跳转的 PC（而非 EPC）
+    # 背景知识：MIPS 的异常程序计数器 (excepTIon program counter,EPC) 属于 CP0 寄存器, 用于保存造成异常的那条指令的地址
+    # 所以，处理完异常，就跳回 EPC / ErrorEPC 继续执行
     
 
 /**************************************************************************************/

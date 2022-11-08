@@ -17,49 +17,44 @@ extern struct Env* env_free_list;
 extern int cur_sched;
 int remaining_time;
 
+// 每一次进行时钟中断时，都会跳转到该函数, 进行进程的调度
 void sched_yield()
 {
 
-	printf("\n\n### sched_yield -->CP0_status: 0x%x\n",get_status());
+	printf("\n\n### sched_yield -->CP0_status: 0x%x\n", get_status());
 
-
-	struct Env *e=curenv;
-	if(curenv==NULL)              //第一次进时间中断
+	struct Env *e = curenv;
+	if(curenv == NULL)              // 第一次进时间中断
 	{
-		
-		e=env_runnable_head; 
+		e = env_runnable_head; 
 		printf("****************** first sched ******************* \n");
 	}
-	else
+	else							// 根据优先级进行调度
 	{
-		
-		int highestPt=0;
-		struct Env *tempE=env_runnable_head;
-		do{
-			
-			if(tempE->env_pri>highestPt)highestPt=tempE->env_pri; 
-			tempE=tempE->env_link;
+		int highestPt = 0;
+		struct Env *tempE = env_runnable_head;
+		// 先遍历一次，得到整个 runnable_list 里的最高优先级
+		do { 
+			if(tempE->env_pri > highestPt) highestPt = tempE->env_pri; 
+			tempE = tempE->env_link;
 
-		}while(tempE!=env_runnable_head);
-		do{
-			
-			e=e->env_link; 
+		} while(tempE!=env_runnable_head);
+		// 然后，得到 list 里第一个最高优先级的进程
+		do { 
+			e = e->env_link; 
+		}while(e->env_pri < highestPt);
 
-		}while(e->env_pri<highestPt);
-
-
-		printf("\ncurenv_id: 0x%x\n",curenv->env_id);
-		printf("nextenv_id: 0x%x\n",e->env_id);
-		if(e==NULL)         //todo 理论上不会出现,得放个进程在里面
+		printf("\ncur env_id: 0x%x\n", curenv->env_id);
+		printf("next env_id: 0x%x\n", e->env_id);
+		if(e == NULL)         // todo 理论上不会出现, 得放个进程在里面
 		{
-			printf("fail！empty sched queue!!!\n");
-			while(1);			
+			printf("fail! empty sched queue!!!\n");
+			while(1) ;
 		}
-		
 	}
 
 	env_run(e);
-	printf("\n!!!!!!!!!!!env: 0x%x has run!!!!!!\n",e->env_id);
+	printf("\n!!!!!!!!!!!env: 0x%x has run!!!!!!\n", e->env_id);
 }
 
 

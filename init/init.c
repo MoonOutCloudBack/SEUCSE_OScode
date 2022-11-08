@@ -36,6 +36,7 @@ void interface_init()
     printf("    /____/\\____//____/\\____/                  \n");
     printf("\n");
 }
+
 void time_setup()
 {
     char * buf;
@@ -47,6 +48,7 @@ void time_setup()
     
     set_seven_seg_value(*s);
 }
+
 void device_init()
 {
     cons_init();
@@ -65,6 +67,7 @@ void device_init()
 
 
 }
+
 void sys_init()
 {
     printf("\n");

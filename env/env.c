@@ -14,7 +14,7 @@ struct Env *envs = NULL;   // All environments
 struct Env *curenv = NULL; // the current env
 extern int mCONTEXT;
 extern int curtf;
-struct Env *env_free_list = NULL; // Free list
+struct Env *env_free_list = NULL; // Free list, 把空闲的 env 控制块以链表形式串起来
 
 struct Env *env_runnable_head = NULL; // Runnable ring head
 struct Env *env_runnable_tail = NULL; // Runnable ring tail
@@ -27,22 +27,21 @@ extern void lcontext(uint32_t contxt, int n);
 extern void set_asid(uint32_t id);
 extern int get_asid();
 extern void set_epc(uint32_t epc);
-/* 
-申请一个envid
- */
+
+// 申请一个 envid, 低位为 e 在 envs 中的位置，高位为自增编号
 u_int mkenvid(struct Env *e)
 {
 	static u_int next_env_id = 0;
 
-	/*Hint: lower bits of envid hold e's position in the envs array. */
+	/* Hint: lower bits of envid hold e's position in the envs array. */
 	u_int low = e - envs;
 
-	/*Hint:  high bits of envid hold an increasing number. */
+	/* Hint: high bits of envid hold an increasing number. */
 	++next_env_id;
 	return (next_env_id << (1 + LOG2NENV)) | low;
-
 }
 
+// 输入 envid，将【指向 Env 指针】的指针，指向 id 对应的 env
 /* Overview:
  *  Converts an envid to an env pointer.
  *  If envid is 0 , set *penv = curenv;otherwise set *penv = envs[ENVX(envid)];
@@ -90,14 +89,17 @@ int envid2env(u_int envid, struct Env **penv, int checkperm)
 	return 0;
 }
 
-// 初始化所有env，链到env_free_list上
+// 初始化所有 env，链到 env_free_list 上
 void env_init(void)
 {
+	// 存放进程控制块 (PCB) 的物理内存，在系统启动后就要分配好，并且这块内存不可以被换出
+	// 因此, 在系统启动之后, 就要为进程控制块数组 envs 分配好内存
 	int i;
-	for (i = NENV - 1; i >= 0; i--)
+	for (i = NENV - 1; i >= 0; i--) // NENV 应该是我们一共支持多少进程
 	{
 		envs[i].env_id = 0XFFFFFFFF;
 		envs[i].env_status = ENV_FREE;
+		// 插入到 env_free_list 链表头节点
 		envs[i].env_link = env_free_list;
 		env_free_list = &envs[i];
 		envs[i].heap_pc=UTOP;
@@ -105,7 +107,7 @@ void env_init(void)
 	}
 }
 
-// 初始化e的虚拟地址空间
+// 初始化 e 的虚拟地址空间
 static int
 env_setup_vm(struct Env *e)
 {
@@ -165,7 +167,7 @@ int env_alloc(struct Env **new, u_int parent_id)
 	struct Env *e;
 
 	/*Step 1: Get a new Env from env_free_list*/
-	e = env_free_list;
+	e = env_free_list; // 从 env_free_list 中取出第一个空闲 PCB 块
 	if (e == NULL) 
 	{ 
 		return -E_NO_FREE_ENV; 
@@ -174,10 +176,12 @@ int env_alloc(struct Env **new, u_int parent_id)
 
 	/*Step 2: Call certain function(has been implemented) to init kernel memory layout for this new Env.
      *The function mainly maps the kernel address to this new Env address. */
+	// 调用 env_setup_vm 函数, 初始化这个新 env 的一级页表
 	env_setup_vm(e);
 
 
 	/*Step 3: Initialize every field of new Env with appropriate values*/
+	// 初始化 PCB 项
 	e->env_id = mkenvid(e);
 	e->env_parent_id = parent_id;
 	e->env_status = ENV_RUNNABLE;
@@ -185,9 +189,10 @@ int env_alloc(struct Env **new, u_int parent_id)
 
 	/*Step 4: focus on initializing env_tf structure, located at this new Env. 
      * especially the sp register,CPU status. */
+	// env_tf 是进程上下文（32 个通用寄存器、cp0 之类的）
 	e->env_tf.cp0_status = 0x10007c01;
-	e->env_tf.regs[29] = USTACKTOP; //栈顶
-	e->env_tf.regs[31] = 0x90000000; //返回地址（指向结束的系统调用）
+	e->env_tf.regs[29] = USTACKTOP; // 栈顶
+	e->env_tf.regs[31] = 0x90000000; // 返回地址（指向结束的系统调用）
 	e->env_runs = 0;
 
 	/*Step 5: Remove the new Env from Env free list*/
@@ -224,8 +229,8 @@ int env_alloc_arg(struct Env **new, u_int parent_id, char *arg)
 	/*Step 4: focus on initializing env_tf structure, located at this new Env. 
      * especially the sp register,CPU status. */
 	e->env_tf.cp0_status = 0x10007c01;
-	e->env_tf.regs[29] = USTACKTOP; //栈顶
-	e->env_tf.regs[31] = 0x90000000; //返回地址（指向结束的系统调用）
+	e->env_tf.regs[29] = USTACKTOP; // 栈顶
+	e->env_tf.regs[31] = 0x90000000; // 返回地址（指向结束的系统调用）
 	e->env_runs = 0;
 
 	/*Step 5: Remove the new Env from Env free list*/
@@ -253,6 +258,7 @@ FATFS FatFs; // Work area (file system object) for logical drive
 // 4K size read burst
 #define SD_READ_SIZE 4096
 
+// 得到我们添加的 DDR3SDRAM 的基址，load elf 时, 貌似是放到 DDR 最末端
 uint32_t get_ddr_base()
 {
 	return 0x80000000;
@@ -263,8 +269,6 @@ uint32_t load_elf_mapper(char *elf_name, struct Env *e)
 	FIL fil;																		 // File object
 	FRESULT fr;																		 // FatFs return code
 	uint8_t *boot_file_buf = (uint8_t *)(get_ddr_base()) + DDR_SIZE - MAX_FILE_SIZE; // at the end of DDR space
-
-
 
 	// Register work area to the default drive
 	if (f_mount(&FatFs, "", 1))
@@ -284,9 +288,10 @@ uint32_t load_elf_mapper(char *elf_name, struct Env *e)
 	}
 
 	// Read file into memory
-	uint8_t *buf = boot_file_buf;
+	uint8_t *buf = boot_file_buf; // boot_file_buf 是个固定值
 	uint32_t fsize = 0; // file size count
 	uint32_t br;		// Read count
+	// 以下就是指导手册 61 页，boot loader 中 load elf 的前置代码
 	do
 	{
 		if (fsize % 1024 == 0)
@@ -306,17 +311,19 @@ uint32_t load_elf_mapper(char *elf_name, struct Env *e)
 	int pre_curtf = curtf;
 	int pre_asid = curenv->env_id;
 
-	lcontext(e->env_pgdir,0); // 切换到要新建的进程的asid，之后缺页中断会填这个进程的tlb
+	// 加载 elf 进内存时会触发缺页中断，缺页中断会填当前调用进程的 asid 和页表基址进 tlb 页表项
+	lcontext(e->env_pgdir,0); // 因此，上下文切换到要新建的进程的 asid，之后缺页中断会填这个进程的 tlb
 	set_asid(GET_ENV_ASID(e->env_id));
 
 	// read elf
 	if(br = load_elf_sd(boot_file_buf, fil.fsize))
 		printf("elf read failed with code %d \n\r", br);
-
 	
 	uint32_t entry_point = get_entry(boot_file_buf, fil.fsize);
-	lcontext(pre_pgdir, pre_curtf);
-	set_asid(GET_ENV_ASID(pre_asid));    // 这里和上面是一对的
+
+    // 这里和上面是一对的
+	lcontext(pre_pgdir, pre_curtf); // context 换回来
+	set_asid(GET_ENV_ASID(pre_asid)); // sid 换回来
 
 	printf("\nfinish load elf!\n");
 
@@ -350,7 +357,7 @@ load_icode(struct Env *e, char *elf_name)
 	 *  Remember that the binary image is an a.out format image,
 	 *  which contains both text and data.
      */
-	struct Page *p = NULL;
+	struct Page *p = NULL; // 为新建的进程分配一个物理页，并映射到它的栈的地址上去
 	uint32_t entry_point;
 	u_long r;
 	u_long perm;
@@ -367,16 +374,23 @@ load_icode(struct Env *e, char *elf_name)
 	/*Step 2: Use appropriate perm to set initial stack for new Env. */
 	/*Hint: The user-stack should be writable? */
 	perm = PTE_V | PTE_R;
-	page_insert(e->env_pgdir,p,USTACKTOP-BY2PG,perm);
-
-
+	r = page_insert(e->env_pgdir, p, USTACKTOP - BY2PG, perm);
+	if (r < 0)
+	{
+		printf("error,load_icode:page_insert failed\n");
+		return;
+	}
 
 
 	printf("load_elf:%s\n", elf_name);
-	entry_point = load_elf_mapper(elf_name, e);
-	assert(entry_point != 1); //load 失败
+	entry_point = load_elf_mapper(elf_name, e); // 将完整的二进制镜像 (elf) 加载到进程的用户内存中去
+	// 目前, 设计上会需要将完整的 elf 通过文件系统读到内存中一个固定地址（boot_file_buf 是个固定值），
+	// 然后根据这部分内存的内容，读出 elf 的管理信息，再将实际的代码存到 elf 指定的进程虚拟地址空间中去。
+	assert(entry_point != 1); // load 失败
 
-	e->env_tf.cp0_epc = entry_point;
+	e->env_tf.cp0_epc = entry_point; // 将 elf 指定的的代码入口地址 entry_point, 
+									 // 存在当前进程 env 的 env_tf.cp0_epc 当中，
+									 // 作为后续代码运行的起始 pc 地址
 	return;
 }
 
@@ -395,7 +409,7 @@ void env_create_priority(char *binary, int priority)
 	int r;
 	extern void debug();
 	/*Step 1: Use env_alloc to alloc a new env. */
-	r = env_alloc(&e, 0);
+	r = env_alloc(&e, 0); // 新建一个初始化好的 env
 	if (r < 0)
 	{
 		panic("sorry, env_create_priority:env_alloc failed");
@@ -412,7 +426,7 @@ void env_create_priority(char *binary, int priority)
 
 	}
 	else{
-
+		load_icode(e, binary);
 
 	}
 	tmp = env_runnable_head;
@@ -420,7 +434,7 @@ void env_create_priority(char *binary, int priority)
 	while (tmp != env_runnable_tail)
 	{
 		printf(" 0x%x ", tmp->env_id);
-		
+		// 盲猜是根据 priority 进行链表 优先队列 操作
 
 
 
@@ -526,19 +540,25 @@ void pthread_create(void *func, int arg)
 	int r;
 	printf("status : %x \n", get_status());
 	extern void debug();
-	r = env_alloc(&e, 0);
+
+	// 首先, 调用 env_alloc 函数分配一个线程控制块 env
+	r = env_alloc(&e, 0); 
 	if (r < 0)
 	{
 		panic("sorry, env_create_priority:env_alloc failed");
 		return;
 	}
 
+	// 调用 copy_curenv 函数, 将 新创建的线程 与 当前运行的进程, 设定一些共享的资源, 如页表
 	copy_curenv(e, curenv, func, arg);
-	if (env_runnable_head == NULL) //第一个
-	{
+
+	// 将 env 加入 env_runnable_list
+	if (env_runnable_head == NULL)
+	{	
+		// env 是第一个加入 list 的进程（线程）
 		printf("\nlist=null\n");
 		env_runnable_head = env_runnable_tail = e;
-		env_runnable_tail->env_link = env_runnable_head; //成环
+		env_runnable_tail->env_link = env_runnable_head; // 成环
 	}
 	else
 	{
@@ -632,6 +652,7 @@ void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg) // 不
 	return;
 }
 
+// 释放进程
 /* Overview:
  *  Frees env e and all memory it uses.
  */
@@ -646,22 +667,21 @@ int env_free(struct Env *e)
 	printf("free env->id: 0x%x isCur? %d\n", e->env_id, curenv == e);
 
 	/* Hint: Flush all mapped pages in the user portion of the address space */
-	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++)
+	// 释放该 env 所分配的所有内存页
+	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++) // 遍历该进程的一级页表
 	{
 		/* Hint: only look at mapped page tables. */
-		if (!(e->env_pgdir[pdeno] & PTE_V)) 
-		{ 
+		if (!(e->env_pgdir[pdeno] & PTE_V)) { // 是并没有映射的页表项
 			continue; 
 		}
 
-
 		/* Hint: find the pa and va of the page table. */
-		pa = PTE_ADDR(e->env_pgdir[pdeno]);              //物理地址
-		pt = (Pte *)KADDR(pa);				//虚拟地址
+		pa = PTE_ADDR(e->env_pgdir[pdeno]); // 物理地址
+		pt = (Pte *)KADDR(pa);				// 虚拟地址
 
 		/* Hint: Unmap all PTEs in this page table. */
 		for (pteno = 0; pteno <= PTX(~0); pteno++)
-		{
+		{ // 遍历调用 page_remove 函数清空二级页表
 			if (pt[pteno] & PTE_V) 
 			{
 				page_remove(e->env_pgdir, (pdeno << PDSHIFT) | (pteno << PGSHIFT));
@@ -672,8 +692,6 @@ int env_free(struct Env *e)
 		e->env_pgdir[pdeno] = 0; 
 		page_decref(pa2page(pa));
 
-
-
 	}
 	/* Hint: free the page directory. */
 	pa = e->env_cr3; 
@@ -682,34 +700,32 @@ int env_free(struct Env *e)
 	page_decref(pa2page(pa));
 
 
-
-
 	struct Env *tempE = env_runnable_head;
 	struct Env *tempE_pre = env_runnable_tail;
 	while (tempE != e)
 	{
 		tempE_pre = tempE;
 		tempE = tempE->env_link;
-		if (tempE == env_runnable_head) //回到起点
+		if (tempE == env_runnable_head) // 回到起点
 		{
-			return 0; //没找到
+			return 0; // 没找到
 		}
 	}
-
-	if (tempE == env_runnable_tail)
-	{
+	// 现在我们找到了 e，tempE 指向 e，tempE_pre 是 e 前一个
+	if (tempE == env_runnable_tail){
 		env_runnable_tail = tempE_pre;
 	}
-	if (env_runnable_head == e)
-	{
+	if (env_runnable_head == e){
 		env_runnable_head = env_runnable_head->env_link;
 	}
 
-	                     //从env_runnable里删去e
+	tempE_pre->env_link = tempE->env_link; // 从 env_runnable 里删去e
+	// TODO                     // 保存下来下一个要跑的进程
 
-	                     //保存下来下一个
-	e->env_link = env_free_list;
-	env_free_list = e;
+	// 把 e 加入 env_free_list
+	e->env_status = ENV_FREE;
+	e->env_link = env_free_list; // e 指向 env_free_list 链表头
+	env_free_list = e; // 把新的链表头赋为 e 
 
 	if (e == curenv)
 	{
@@ -742,9 +758,9 @@ void env_run(struct Env *e)
 {
 
 	curenv = e;
-	curenv->env_runs++;
+	curenv->env_runs++; // 该进程已经跑过的次数
 	/*Step 3: Use lcontext() to switch to its address space. */
-	lcontext((curenv->env_pgdir), &(curenv->env_tf));
+	lcontext((curenv->env_pgdir), &(curenv->env_tf)); // 切换上下文
 
 	printf("### curenv-> ID: 0x%x  CONTEXT: 0x%x \n", curenv->env_id, curenv->env_pgdir);
 	printf("### curenv-> env_runs: %d nextenv->env_id: 0x%x\n", curenv->env_runs, curenv->env_link->env_id);
@@ -756,8 +772,8 @@ void env_run(struct Env *e)
      */
 	/* Hint: You should use GET_ENV_ASID there.Think why? */
 	set_asid(GET_ENV_ASID(curenv->env_id)); 
-	env_pop_tf(&(curenv->env_tf)); 
+	env_pop_tf(&(curenv->env_tf));  // 恢复上下文
 
-
+	// lcontext、set_asid、env_pop_tf，都在 env/env_asm.S 汇编里
 }
 
