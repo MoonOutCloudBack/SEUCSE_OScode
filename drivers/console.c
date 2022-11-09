@@ -9,7 +9,6 @@ static void cons_putc(int c);
 
 /***** Serial I/O code *****/
 /* 
-
 串口 IO 的代码。
 
 串口的意思是 串行接口，数据在传输线中一位一位的传输，所以，仅用一根线就能实现双向通信。
@@ -22,7 +21,26 @@ static void cons_putc(int c);
 - DLM：divide latch (most significant byte)，除数锁存（最高有效字节）寄存器
 - IER：interrput enable 中断使能寄存器
 
+*/
 
+
+/*
+对于 printf 部分，
+- 首先，看 lib/printf.c 里的 printf 函数，发现 printf 是 lib/print.c 的 lp_Print 函数套壳
+- lib/print.c 的 lp_Print 函数，它的主要功能是解析 %d %s 这种 format 字符串，并不是用来输出
+	- 具体的，lp_Print 需要传进来一个 输出函数 的参数，然后在 lp_Print 它自己的函数体内，调用这个输出函数，来输出字符
+	- 这里，传进来的输出函数是 lib/printf.c 里的 myoutput
+- 然后，
+	- myoutput 是 drivers/console.c（本文件）的 cputchar 套壳
+	- cputchar 是本文件的 cons_putc 套壳
+	- cons_putc 是本文件的 serial_putc 套壳
+- serial_putc 函数：用于串口输出，大概就是往串口的输出寄存器里塞字符
+- 其他函数：
+	- serial_proc_data：从端口的 buffer 寄存器里取数据
+	- serial_intr：cons_intr 套壳，由想中断的设备调用，用来把想告诉我们 OS 的话（已经在串口寄存器里了）填进 buffer
+		- 这里的 buffer 是 input buffer，即我们使用 OS 的时候，在 OS console 输入的内容
+		- 所以，数据流向是 putty -> 串口输入寄存器 -> 本文件维护的 input buffer
+	- cons_getc：得到 buffer 里存放的字符串
 
 */
 static int serial_proc_data(void) {
