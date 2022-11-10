@@ -150,9 +150,9 @@ nor_ret:  # 非嵌套异常，使用 ERET 将 EXL 清零，返回用户态
 	j cont
 	nop
 core_ret: # 嵌套异常
-	# 恢复上一个异常的EPC 是否还需要恢复其他CP0寄存器？
-	lw	k0,TF_EPC(sp)
-	mtc0	k0,CP0_EPC 
+	# 恢复上一个异常的EPC 是否还需要恢复其他CP0寄存器？上一个异常恢复之前也会 RESTORE_ALL，（注意是先RESTORE后读EPC）因此这里不需要单独操作
+	# lw	k0,TF_EPC(sp)
+	# mtc0	k0,CP0_EPC 
 cont: # continue
 	j k1 # 跳转回发生异常的地址继续执行
 	nop
@@ -246,9 +246,13 @@ button_deal:
 timer_irq: # 用来清空计时器并调用 sched_yield 函数
 	nop
 	# 处理定时器
+	j	clear_timer0_int
+	j	sched_yield # sched_yield 中会从PCB中恢复上下文和EPC
+	# j	ret_from_exception
 
-
-
+	# sched_yield 中并没有跳转，这里是否需要跳转，跳转到EPC?（EPC其实就是当前上下文中PC的值）
+	# mfc0	t1,CP0_EPC,2
+	# j t1
 	nop
 
 
