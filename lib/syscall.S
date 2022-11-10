@@ -13,37 +13,50 @@ NESTED(handle_sys,TF_SIZE, sp)
     nop
     .set at
 
+    # 系统调用号为什么是从v0拿的? 讲义中写的是从a0中拿
+    # 系统调用的参数是否需要处理?
+    addiu   v0, v0, -__SYSCALL_BASE  # v0 = v0 - __SYSCALL_BASE，得到相对偏移
+    # _if(v0 < __NR_SYSCALLS+1) t0=1 else t0=0  __NR_SYSCALLS是系统调用总个数
+    li  t2, -__NR_SYSCALLS
+    addu t2, v0 # [t2] = [v0] - __NR_SYSCALLS，如果 [t2]<=0，t0=1，否则t0=0
+    # li  t1, -0x1
+    # addu t2, t1 # [t2] = [v0] - __NR_SYSCALLS - 1
+    blez t2,core_ret_1 # if [t2]<=0,goto set_t0_1
+    li  t0,0x0
+    j end_set_t0
+set_t0_1:
+    li  t0,0x1
 
-                                     # v0 = v0 - __SYSCALL_BASE，得到相对偏移
-                                     # _if(v0 < __NR_SYSCALLS+1) t0=1 else t0=0  __NR_SYSCALLS是系统调用总个数
+end_set_t0:
 
     #  set epc as epc plus 4 对于系统调用异常来说，处理返回地址是下一条指令的地址，而非当前指令的地址
     #  Where is the next being exectued cpu instruction when return from exception?
-    
+    lw t1, TF_EPC(sp)
+    addi t1, t1, 4
 
-
-                          # 系统调用结束后得进行下一条指令
+    sw t1, TF_EPC(sp)   # 系统调用结束后得进行下一条指令
 
     #  ——if legal , goto the right function s address
-                                 # _if t0 = 0, goto illegal_syscall
+    beq     t0, zero, illegal_syscall # _if t0 = 0, goto illegal_syscall
     nop
-                                 # 把序号偏移左移两位，相当于乘以4，得到一个地址偏移（一个地址4字节
-                                 # load address : t1 <- sys_call_table 总入口
-                                 # t1 = t1 + t0 得到具体入口
-                                 # t2 = MEM(t1)  取这个位置的指针
-                                 # _if t2 = 0, goto illegal_syscall
+    sll     t0, v0, 2            # 把序号偏移左移两位，相当于乘以4，得到一个地址偏移（一个地址4字节
+    la      t1, sys_call_table   # load address : t1 <- sys_call_table 总入口
+    addu    t1, t1, t0           # t1 = t1 + t0 得到具体入口
+    lw      t2, 0(t1)            # t2 = MEM(t1)  取这个位置的指针
+    beq     t2, zero, illegal_syscall # _if t2 = 0, goto illegal_syscall
     nop
 
 
     nop
-    la  ra,handle_return
+    la  ra,handle_return # 把handle_return作为系统调用的返回地址
     # go to exectue the syscall
     jalr    t2      # t2 is syscall function's address
     nop
 
 handle_return:    
 
-     #   把返回值放进去
+    # 返回值存在 v0寄存器中，将其保存到相应的内核栈中
+    sw  v0, TF_REG2(sp) #   把返回值放进去
 
     j   ret_from_exception
     nop
