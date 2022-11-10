@@ -113,12 +113,12 @@ LEAF(_start)
 	# test code 
 	li v0, 0x80000000
 	li v1, 0x08000060
-	sw v1, 0(v0)
-	addi v0, 4
+	sw v1, 0(v0) # 将 0x08000060 写入 0x08000000上
+	addi v0, 4 # v0改为下一条指令的地址
 
 	li v1, 0x00000000
-	sw v1, 0(v0)
-	addi v0, 4
+	sw v1, 0(v0) # 将 0x00000000 写入 0x08000004上
+	addi v0, 4 # 再把v0改为下一条指令的地址
 
 	
 	
@@ -126,8 +126,7 @@ LEAF(_start)
 
     la v0, _fbss
 	la v1, _end
-	beq v0,v1,2f
-1:
+	beq v0,v1,2f # if([v0]==[v1]) PC = PC + signExtened(2f<<2)
 	addiu v0,v0,4
 	nop
 	sw zero,-4(v0)
@@ -136,13 +135,18 @@ LEAF(_start)
 2:
 
 	/* disable kernel mode cache */
-	
-
-
+	# 重点是修改 Config Register 的 2:0 位
+	mfc0    t0, CP0_CONFIG # 读取CP0_CONFIG寄存器
+	and     t0, ~0x7 # ~0x7 应该是对 0000_0111 做1扩展，即ffff_fff7，把config的后三位置0
+	ori     t0, 0x2 # 或立即数，[t0] = [t0] OR 0000_0010 ，把倒数第2位置1
+	mtc0    t0, CP0_CONFIG
 
 	/* set up stack */
-	    #KERNEL的栈顶位置,16K
-	
+	#KERNEL的栈顶位置,16K
+	li      sp, 0x80400000 # 切到内核栈顶
+
+	li      t0,0x80400000
+	sw      t0,mCONTEXT
 
 	# Clear boot interrupt vector bit in Coprocessor 0 Status register
 	macro: mips32_bicsr (SR_BEV);
@@ -150,10 +154,13 @@ LEAF(_start)
 
 	/* jump to main */
 
+	# UM=0;CP0=0;IE=0,内核态，开中断 
+	# 这里和讲义上写的不一样?
+	mfc0 t0 CP0_STATUS
+	ori t0 0x1 # 最后一位置1，IE=1
+	mtc0 t0 CP0_STATUS #结果写入status寄存器
 
-		  # UM=0;CP0=0;IE=0,内核态，开中断
-
-
+	jal     main
 
 	nop
 
