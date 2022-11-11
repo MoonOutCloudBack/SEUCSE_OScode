@@ -39,7 +39,7 @@ int getAsidIndex()
             return i;
         }
     }
-    //return 1;
+    return -1;
 }
 
 //申请资源
@@ -51,33 +51,28 @@ bool rt_require_device(u32 device_id, u32 request_num)
         return false;
     }
     int customer_num = getAsidIndex();
-    if (                    )
+    if (customer_num == -1)
         return false;
     int result = 1;
     int status_tmp[NUMBER_OF_CUSTOMERS];
     int available_after_assign[NUMBER_OF_RESOURCES];
     int tmp[NUMBER_OF_CUSTOMERS][NUMBER_OF_RESOURCES];
+    int allocation_after_assign[NUMBER_OF_CUSTOMERS][NUMBER_OF_RESOURCES];
 
     for (u32 d = 0; d < NUMBER_OF_CUSTOMERS; d++)
         status_tmp[d] = status[d];
     for (u32 n = 0; n < NUMBER_OF_RESOURCES; n++)
     {
         printf("available before:%d    ", available[n]);
-        
-
-
-
-
-
-
+        available_after_assign[n] = available[n]; 
         printf("\n");
     }
     for (u32 c = 0; c < NUMBER_OF_CUSTOMERS; c++)
     {
         for (u32 d = 0; d < NUMBER_OF_RESOURCES; d++)
         {
-            
-
+            tmp[c][d] = need[c][d];    
+            allocation_after_assign[c][d] = allocation[c][d];    
         }
         printf("\n");
     }
@@ -85,20 +80,17 @@ bool rt_require_device(u32 device_id, u32 request_num)
 
     //以上代码为复制当前的状态
     bool sum = true;
-    tmp[customer_num][device_id] -= request_num;
 
-    for (u32 n = 0; n < NUMBER_OF_RESOURCES; n++)
-    {
-        
+    if (!(request_num <= tmp[customer_num][device_id] && request_num <= available_after_assign[device_id]))
+        sum = false;
 
-    }
+
     if (sum)
     {
-                                               //模拟这个进程结束
-        for (u32 n = 0; n < NUMBER_OF_RESOURCES; n++)
-        {
-
-        }//退还给剩余资源List
+        available_after_assign[device_id] -= request_num;          //模拟这个进程结束
+        allocation_after_assign[customer_num][device_id] += request_num;
+        tmp[customer_num][device_id] -= request_num;
+    
     }
     u32 ptr = 0;
     u32 fail = 0;
@@ -107,41 +99,43 @@ bool rt_require_device(u32 device_id, u32 request_num)
     for (u32 n = 0; n < NUMBER_OF_RESOURCES; n++)
         printf("%d    ", available_after_assign[n]);
     printf("\n");
-    while (1)
-    {
-        u32 count = 0;
-        u32 mark = 1;
-        while (status_tmp[ptr] > 0)
-        {
-            
 
+    while (1) {
+        int flag = 0;
+        int count = 0;
+        for (ptr = 0; ptr < NUMBER_OF_CUSTOMERS; ptr++) {
+            int mark = 1;
+            if (status_tmp[ptr] != 1) {
+                for (u32 n = 0; n < NUMBER_OF_RESOURCES; n++) {
+                    printf("%d available after assign:%d, tmp:%d \n", n, available_after_assign[n], tmp[ptr][n]);
+                    if(tmp[ptr][n] > available_after_assign[n]) {
+                        mark = 0;
+                        break;
+                    }
+                }
+                if(mark == 1) {
+                    flag = 1;
+                    break;
+                }
+            } else {
+                count++;
+            } 
         }
-        for (u32 n = 0; n < NUMBER_OF_RESOURCES; n++)
-        {
-            printf("%d available after assign:%d, tmp:%d \n", n, available_after_assign[n], tmp[ptr][n]);
-            
 
+        if (count >= NUMBER_OF_CUSTOMERS)
+            goto assign;
 
-        }
-        if (mark)
-        {
-            
-
-
-        }
-        else
-        {
-            
-
-
-        }
-        if (fail >= NUMBER_OF_CUSTOMERS)
-        {
-            
-
-
+        if (flag == 1) {
+            for (u32 n = 0; n < NUMBER_OF_RESOURCES; n++)
+                available_after_assign[n] += allocation_after_assign[ptr][n]; 
+            status_tmp[ptr] = 1;
+        } else {
+            result = 0;
+            goto exit;
         }
     }
+
+
 //分配后还是安全的，则执行资源分配
 assign:
 
@@ -159,10 +153,11 @@ exit:
     if (result)
     {
         printf("fullfilled\n");
-                     //给该进程分配相应数目资源
+        device_list[device_id].rt_require_device(request_num);            //给该进程分配相应数目资源
     }
-    else
+    else {
         printf("denied\n");
+    }
 
     return result;
 }
@@ -170,15 +165,9 @@ exit:
 bool rt_release_device(u32 device_id, u32 request_num)
 {
     //释放拥有的资源
-
-
-
-
-
-
-
-
-
+    if (device_list[device_id].rt_release_device == NULL)
+        return false;
+    device_list[device_id].rt_release_device(request_num);
 }
 
 bool rt_device_init(u32 device_id, bool (*rt_device_read)(char *), bool (*rt_device_write)(char *), bool (*rt_device_write_byte)(char *, u32), u32 num, bool (*rt_device_write_by_num)(char *, u32 i), bool (*rt_device_read_by_num)(char *, u32 i), bool (*rt_require_device)(u32 i), bool (*rt_release_device)(u32 i))
@@ -228,14 +217,13 @@ bool rt_claim_device(u32 *require)
 {
     int index = getAsidIndex();
     printf("%d", index);
-    
-
-
-
-
-
-
-
+                               //进程还需要的数量
+    for (int i = 0; i < NUMBER_OF_RESOURCES; i++) {
+        need[index][i] = require[i];
+        maximum[index][i] = require[i];
+        allocation[index][i] = 0;
+    }
+    status[index] = 0;
 }
 
 bool rt_device_write_by_num(u32 device_id, u32 num, char *buf)
