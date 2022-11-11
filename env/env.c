@@ -425,13 +425,13 @@ void env_create_priority(char *binary, int priority)
 
 	/* Step 4 (additional): 将 env 加到 env_runnable 链表里*/
     if(env_runnable_head == NULL) { // env_runnable 链表是否为空
-		env->env_link = env;
-		env_runnable_head = env_runnable_tail = env;
+		e->env_link = e;
+		env_runnable_head = env_runnable_tail = e;
 	}
 	else {
-		env->env_link = env_runnable_head;
-		env_runnable_tail->env_link = env;
-		env_runnable_tail = env;
+		e->env_link = env_runnable_head;
+		env_runnable_tail->env_link = e;
+		env_runnable_tail = e;
 	}
 	// 调试：遍历输出 env_runnable 链表
 	tmp = env_runnable_head;
@@ -465,13 +465,13 @@ void env_create_priority_arg(char *binary, int priority, char *arg)
 
 	/* Step 4 (additional): 将 env 加到 env_runnable 链表里*/
     if(env_runnable_head == NULL) { // env_runnable 链表是否为空
-		env->env_link = env;
-		env_runnable_head = env_runnable_tail = env;
+		e->env_link = e;
+		env_runnable_head = env_runnable_tail = e;
 	}
 	else {
-		env->env_link = env_runnable_head;
-		env_runnable_tail->env_link = env;
-		env_runnable_tail = env;
+		e->env_link = env_runnable_head;
+		env_runnable_tail->env_link = e;
+		env_runnable_tail = e;
 	}
 	// 调试：遍历输出 env_runnable 链表
 	tmp = env_runnable_head;
@@ -517,13 +517,13 @@ void env_create_share(char *binary, int num, int priority)
 
 	/* Step 4 (additional): 将 env 加到 env_runnable 链表里*/
     if(env_runnable_head == NULL) { // env_runnable 链表是否为空
-		env->env_link = env;
-		env_runnable_head = env_runnable_tail = env;
+		e->env_link = e;
+		env_runnable_head = env_runnable_tail = e;
 	}
 	else {
-		env->env_link = env_runnable_head;
-		env_runnable_tail->env_link = env;
-		env_runnable_tail = env;
+		e->env_link = env_runnable_head;
+		env_runnable_tail->env_link = e;
+		env_runnable_tail = e;
 	}
 	// 调试：输出 env_runnable 链表的 head tail
 	printf("list ID: 0x%x \n", env_runnable_head->env_id);
