@@ -421,23 +421,25 @@ void env_create_priority(char *binary, int priority)
 
 	/*Step 3: Use load_icode() to load the named elf binary. */
 	printf("load_icode:%s\n", binary);
-    if(      )
-	{
+	load_icode(e, binary);
 
+	/* Step 4 (additional): 将 env 加到 env_runnable 链表里*/
+    if(env_runnable_head == NULL) { // env_runnable 链表是否为空
+		e->env_link = e;
+		env_runnable_head = env_runnable_tail = e;
 	}
-	else{
-		load_icode(e, binary);
-
+	else {
+		e->env_link = env_runnable_head;
+		env_runnable_tail->env_link = e;
+		env_runnable_tail = e;
 	}
+	// 调试：遍历输出 env_runnable 链表
 	tmp = env_runnable_head;
 	printf("list ID: 0x%x \n", env_runnable_head->env_id);
 	while (tmp != env_runnable_tail)
 	{
 		printf(" 0x%x ", tmp->env_id);
-		// 盲猜是根据 priority 进行链表 优先队列 操作
-
-
-
+		tmp = tmp->env_link;
 	}
 	printf("\ntail ID: 0x%x \n", env_runnable_tail->env_id);
 }
@@ -459,20 +461,25 @@ void env_create_priority_arg(char *binary, int priority, char *arg)
 
 	/*Step 3: Use load_icode() to load the named elf binary. */
 	printf("load_icode:%s\n", binary);
-	if(      )
-	{
+	load_icode(e, binary);
 
+	/* Step 4 (additional): 将 env 加到 env_runnable 链表里*/
+    if(env_runnable_head == NULL) { // env_runnable 链表是否为空
+		e->env_link = e;
+		env_runnable_head = env_runnable_tail = e;
 	}
-	else{
-
-
+	else {
+		e->env_link = env_runnable_head;
+		env_runnable_tail->env_link = e;
+		env_runnable_tail = e;
 	}
+	// 调试：遍历输出 env_runnable 链表
 	tmp = env_runnable_head;
 	printf("list ID: 0x%x \n", env_runnable_head->env_id);
 	while (tmp != env_runnable_tail)
 	{
-		
-
+		printf(" 0x%x ", tmp->env_id);
+		tmp = tmp->env_link;
 	}
 	printf("\ntail ID: 0x%x \n", env_runnable_tail->env_id);
 }
@@ -506,14 +513,19 @@ void env_create_share(char *binary, int num, int priority)
 
 	/*Step 3: Use load_icode() to load the named elf binary. */
 	printf("load_icode:%s\n", binary);
-	if(      )
-	{
+	load_icode(e, binary);
 
+	/* Step 4 (additional): 将 env 加到 env_runnable 链表里*/
+    if(env_runnable_head == NULL) { // env_runnable 链表是否为空
+		e->env_link = e;
+		env_runnable_head = env_runnable_tail = e;
 	}
-	else{
-
-
+	else {
+		e->env_link = env_runnable_head;
+		env_runnable_tail->env_link = e;
+		env_runnable_tail = e;
 	}
+	// 调试：输出 env_runnable 链表的 head tail
 	printf("list ID: 0x%x \n", env_runnable_head->env_id);
 	printf("tail ID: 0x%x \n", env_runnable_tail->env_id);
 
@@ -578,13 +590,13 @@ void pthread_create(void *func, int arg)
 */
 void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg) // 不确定
 {
-	Pte *pt;
-	u_int pdeno, pteno, pa;
+	Pte *pt; // page table entry 页表项 (unsigned long)
+	u_int pdeno, pteno, pa; // pde: page directory entry 一级页表项 / 页目录 (unsigned long)
 	e->env_tf.cp0_epc = func;
 	e->env_tf.regs[4] = arg;
 	printf("### curenv->CONTEXT: 0x%x \n", env_src->env_pgdir);
-	struct Page *p = NULL;
-	Pde *pgdir;
+	Pde *pgdir; // 新的一级页表项
+	struct Page *p = NULL; // 以及它对应的新页
 	int r;
 	if ((r = page_alloc(&p)) < 0)
 	{
@@ -594,51 +606,52 @@ void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg) // 不
 	p->pp_ref++;
 	pgdir = (Pde *)(page2kva(p));
 	printf("### e->CONTEXT: 0x%x \n", pgdir);
-	e->env_pgdir = pgdir;
+	e->env_pgdir = pgdir; // 将这个新的一级页表项，作为 copy env 的页表项
 	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++)
 	{
 		/* Hint: only look at mapped page tables. */
 		if (!(env_src->env_pgdir[pdeno] & PTE_V)) 
-		{ 
+		{ // 如果原 env 的一级页表项，没有映射到二级页表地址
 			e->env_pgdir[pdeno] = 0; 
 			continue; 
 		}
 
 		/* Hint: find the pa and va of the page table. */
-		e->env_pgdir[pdeno] = env_src->env_pgdir[pdeno];//拷贝二级页表地址
+		e->env_pgdir[pdeno] = env_src->env_pgdir[pdeno]; // 直接拷贝二级页表地址，共享二级页表
 		printf("content:0x%x\n", e->env_pgdir[pdeno]);
-		pa = PTE_ADDR(env_src->env_pgdir[pdeno]);   //源二级页表物理地址
-		pt = (Pte *)KADDR(pa);  //源二级页表虚拟地址
-		pa2page(pa)->pp_ref++;//增加二级页表物理引用
-
+		pa = PTE_ADDR(env_src->env_pgdir[pdeno]); // 源二级页表物理地址
+		pt = (Pte *)KADDR(pa); // 源二级页表虚拟地址
+		pa2page(pa)->pp_ref++; // 增加二级页表的物理引用
 
 		/* Hint: Unmap all PTEs in this page table. */
-		for (pteno = 0; pteno <= PTX(~0); pteno++) //
+		for (pteno = 0; pteno <= PTX(~0); pteno++)
 		{
 			if (pt[pteno] & PTE_V)
 			{
 				int pa_tmp = PTE_ADDR(pt[pteno]); 
-				pa2page(pa_tmp)->pp_ref++;
+				pa2page(pa_tmp)->pp_ref++; // 增加物理页的物理引用
 			}
 		}
 	}
+	// 线程具有自己独立的栈空间，因此，在拷贝完一级页表后，我们需要其中清空栈地址
+	// 这样，线程就拥有了自身独立的栈
 	for (pdeno = PDX(USTACKTOP); pdeno >= 0; pdeno--)
 	{
 		// 清空栈地址
-		if (                    )
+		if(!(e->env_pgdir[pdeno] & PTE_V))
 		{
 			break;
 		}
-		pa = PTE_ADDR(env_src->env_pgdir[pdeno]); //源二级页表物理地址
-		pt = (Pte *)KADDR(pa);				//源二级页表虚拟地址
-		pa2page(pa)->pp_ref--;				//减少二级页表物理引用
+		pa = PTE_ADDR(env_src->env_pgdir[pdeno]); // 源二级页表物理地址
+		pt = (Pte *)KADDR(pa); // 源二级页表虚拟地址
+		pa2page(pa)->pp_ref--; // 减少二级页表的物理引用
 
 		for (pteno = 0; pteno <= PTX(~0); pteno++) 
 		{
 			if (pt[pteno] & PTE_V)
 			{
 				int pa_tmp = PTE_ADDR(pt[pteno]); 
-				pa2page(pa_tmp)->pp_ref--;
+				pa2page(pa_tmp)->pp_ref--; // 减少物理页的物理引用
 			}
 		}
 		e->env_pgdir[pdeno] = 0;
@@ -706,8 +719,7 @@ int env_free(struct Env *e)
 	{
 		tempE_pre = tempE;
 		tempE = tempE->env_link;
-		if (tempE == env_runnable_head) // 回到起点
-		{
+		if (tempE == env_runnable_head) { // 回到起点
 			return 0; // 没找到
 		}
 	}
@@ -720,7 +732,7 @@ int env_free(struct Env *e)
 	}
 
 	tempE_pre->env_link = tempE->env_link; // 从 env_runnable 里删去e
-	// TODO                     // 保存下来下一个要跑的进程
+	tempE = e->env_link; // 如果释放的进程是当前进程，那么就调度它之后的那个进程进来运行
 
 	// 把 e 加入 env_free_list
 	e->env_status = ENV_FREE;
