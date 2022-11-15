@@ -73,7 +73,7 @@ kernel_sp:
 			.word 0
 
 			.globl mCONTEXT
-mCONTEXT:
+mCONTEXT:	# 应该就是放着内核栈底常数 0x80400000
 			.word 0
 
 			.globl exception_handlers
@@ -156,6 +156,7 @@ LEAF(_start)
 
 	# UM=0;CP0=0;IE=0,内核态，开中断 
 	# 这里和讲义上写的不一样?
+	# !! 负责运行bootloader的main() 和init里的main不是同一个东西
 	mfc0 t0 CP0_STATUS
 	ori t0 0x1 # 最后一位置1，IE=1
 	mtc0 t0 CP0_STATUS #结果写入status寄存器

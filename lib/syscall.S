@@ -15,7 +15,8 @@ NESTED(handle_sys,TF_SIZE, sp)
 
     # 系统调用号为什么是从v0拿的? 讲义中写的是从a0中拿
     # 系统调用的参数是否需要处理?
-    addiu   v0, v0, -__SYSCALL_BASE  # v0 = v0 - __SYSCALL_BASE，得到相对偏移
+    # 异常处理为什么一会用k寄存器一会用t寄存器?
+    addiu   v0, v0, -__SYSCALL_BASE  # a0 = a0 - __SYSCALL_BASE，得到相对偏移
     # _if(v0 < __NR_SYSCALLS+1) t0=1 else t0=0  __NR_SYSCALLS是系统调用总个数
     li  t2, -__NR_SYSCALLS
     addu t2, v0 # [t2] = [v0] - __NR_SYSCALLS，如果 [t2]<=0，t0=1，否则t0=0
