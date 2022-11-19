@@ -76,7 +76,7 @@ called by device interrupt routines to feed input characters
 into the circular console input buffer.
 cons_intr 由想中断的设备调用，用来把想说的话填进 buffer
 */
-static void cons_intr(int (*proc)(void)) { // proc 是一个表示函数的 symbol
+static void cons_intr(int (*proc)(void)) { // 参数是一个int(void)的函数指针
 	// TODO
     int c;
     while ((c = (*proc)()) != -1) { // 反复调用 serial_proc_data，一个字一个字的得到
@@ -116,7 +116,7 @@ int cons_getc(void) {
 // output a character to the console
 // 把字符串 c 输出到 console
 static void cons_putc(int c) {
-	// TODO
+	// 换行符处理：Windows的换行符是CRLF
 	if (c == '\n') { // 如果要换行，那么换行 + 回车，貌似因为我们是 Windows 系统？
 		serial_putc(c);
 		serial_putc('\r');

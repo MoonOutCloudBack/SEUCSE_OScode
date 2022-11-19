@@ -52,12 +52,12 @@ OF SUCH DAMAGE.
 	.set	noreorder           # Don't allow the assembler to reorder instructions.
 	.set	noat                # Don't allow the assembler to use r1(at) for synthetic instr.
 
-##################
+# #################
 # 
 # 首先，MIPS 的 cache 分为 instruction cache 与 data cache
 # init 时，要把所有 cache tag 置为 invalid（通过修改 tag 为全零）
 # 达成“所有”的方法，是 1. 得到一共有多少个 cache，2. 计数 一个一个初始化
-##################
+# #################
 
 
 /**************************************************************************************
@@ -77,8 +77,11 @@ LEAF(init_icache)
 	# Skip ahead if No I$. 如果没有 icache，则直接 done
 	beq		t1, zero, done_icache
 	nop
+
+	li		t1, 0x10		# 下次用到t1是初始化所有icache行的时候，t1存储的是相邻icache行映射的虚拟地址的递增量
+
 	# 首先得到 icache 的真正 line size
-	li		t1, 0x10			# Now have true I$ line size in bytes，存到 t1
+	# Now have true I$ line size in bytes，
 
 	# C0_CONFIG1 寄存器的 IS（24:22）表示 icache 每一 way 的 line 数量
 	# 0x0: 64; 0x1: 128; 0x2: 256; 0x3: 512; 0x4: 1024。 也就是 64 左移的位数
@@ -101,7 +104,7 @@ LEAF(init_icache)
 
 	lui		t5, 0x8000    		# Get a KSeg0 address for cacheops，存在 t5
 	# lui 指令：lui rD,imme： rD <- (imme<<16)
-	# 我也不太清楚为什么是 0x8000, 但是虚拟地址 0x8000 0000 对应物理地址 0x0000 0000
+	# 0x8000左移16位成为虚拟地址 0x8000 0000，是KSeg0的起始地址，对应物理地址 0x0000 0000
 
 	# Clear TagLo/TagHi registers
 	# TagLo 是 CP0 的第 28 号（从 0 开始计数）寄存器，作为 cache tag 的接口（个人理解为缓冲，参见下面 cache 指令）
@@ -112,7 +115,7 @@ LEAF(init_icache)
 	# 重申：mtc0 中，被赋值的 CP0 寄存器，是汇编语句的第二个 arg
 
 	
-
+# 遍历所有的icache行，进行010：store tag（上一步刚把 C0_TAGLO 置零）
 next_icache_tag:
 	# Index Store Tag Cache Op
 	# Will invalidate the tag entry, clear the lock bit, and clear the LRF bit
@@ -141,7 +144,7 @@ next_icache_tag:
 	cache	0x8, 0(t5) 			    # ICIndexStTag, 8 是 01000，从 CP0_TAGLO 写入 tag
 	addi	t4, t4, -1				# Decrement set counter
 	bne		t4, zero, next_icache_tag
-	add		t5, t5, t1				# Get next line address
+	add		t5, t5, t1				# Get next line address，从KSeg0开始向高地址处增长
 
 done_icache:
 

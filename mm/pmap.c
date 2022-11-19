@@ -456,7 +456,7 @@ void* insert_share_vm(struct Env *e, struct Page *p)
 {
     u_long perm;
     u_long r;
-    perm = PTE_V | PTE_R;
+    perm = PTE_V | PTE_R;   // TODO: do we need PTE_LIBRARY?
     /*Step 2: Use appropriate perm to set initial stack for new Env. */
     /*Hint: The user-stack should be writable? */
     r = page_insert(e->env_pgdir, p, ???,perm      );  //TODO VA下移两个页
@@ -465,7 +465,7 @@ void* insert_share_vm(struct Env *e, struct Page *p)
         printf("error,load_icode:page_insert failed\n");
         return NULL;
     }
-    e->heap_pc = e->heap_pc + ???;   // 堆向上生长
+    e->heap_pc = e->heap_pc + BY2PG;   // 堆向上生长
     int *result =               ;
     return result;
 }
