@@ -18,6 +18,7 @@ extern int cur_sched;
 int remaining_time;
 
 // 每一次进行时钟中断时，都会跳转到该函数, 进行进程的调度
+// 放弃当前进程的CPU时间
 void sched_yield()
 {
 
@@ -33,16 +34,15 @@ void sched_yield()
 	{
 		int highestPt = 0;
 		struct Env *tempE = env_runnable_head;
-		// 先遍历一次，得到整个 runnable_list 里的最高优先级
+		// 遍历一次，同时维护最高优先级和优先级最高的进程
 		do { 
-			if(tempE->env_pri > highestPt) highestPt = tempE->env_pri; 
+			if(tempE->env_pri > highestPt) {
+				highestPt = tempE->env_pri; 
+				e = tempE;
+			}
 			tempE = tempE->env_link;
 
-		} while(tempE!=env_runnable_head);
-		// 然后，得到 list 里第一个最高优先级的进程
-		do { 
-			e = e->env_link; 
-		}while(e->env_pri < highestPt);
+		} while(tempE != env_runnable_head);
 
 		printf("\ncur env_id: 0x%x\n", curenv->env_id);
 		printf("next env_id: 0x%x\n", e->env_id);

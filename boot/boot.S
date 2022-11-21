@@ -91,7 +91,7 @@ LEAF(__cpu_init)
     beqz    t0, init_resources      # Branch if this is NOT an NMI exception.
     nop
     sdbbp                           # Failed assertion: NMI. 那么，现在要处理 NMI 中断了
-    # sdbbp 指令：产生 EJTAG 异常的断点指令。如果执行遇到 sdbbp，则出发调试异常（断点）
+    # sdbbp 指令：产生 EJTAG 异常的断点指令。如果执行遇到 sdbbp，则触发调试异常（断点）
 
 
 init_resources:                 # initializes resources for "cpu".
@@ -110,7 +110,7 @@ init_resources:                 # initializes resources for "cpu".
     # The changing of Kernel mode cacheability must be done from KSEG1
     # Since the code is executing from KSEG0 It needs to do a jump to KSEG1 change K0 and jump back to KSEG0
     
-    ########### MIPS 的存储空间 #############
+    # ########## MIPS 的存储空间 #############
     # MIPS 将存储空间划分为4大块: kuseg, kseg0, kseg1, kseg2.
 
     # 0xFFFF FFFF
@@ -125,7 +125,7 @@ init_resources:                 # initializes resources for "cpu".
 
     # 注意，kseg0 和 kseg1 都是映射上物理地址 0x00000000 - 0x1fffffff 上
     # 因此，程序运行的起始地址 0xbfc00000 实际上是物理地址 0x1fc00000
-    ########################
+    # #######################
 
     la          t0, change_k0_cca   # load address，change_k0_cca 在 init_cache 里
     li          t1, 0x1             # load immediate
@@ -148,8 +148,6 @@ init_resources:                 # initializes resources for "cpu".
     ehb                         # clear hazards (makes sure write to ErrorPC has completed)
     # ehb 指令：exception hazard barrier，功效为插入足够多的 nop，
     # 用来保证, 在运行后面代码之前，前面的内容已经安全写入寄存器了（规避流水冒险）
-    # 产生原因：异常处理结束时，接下来的指令仍然被预取执行。然而，由于异常处理结束，CPU 的特权级别发生了改变，
-    # 但被流水线预取的指令并不知道这些，因而导致严重的安全性问题。
     # 类似指令：eret，从异常（原子的）返回；jr.hb jalr.hb，跳转寄存器指令，用来消除指令危险
 
 
@@ -166,6 +164,7 @@ all_done:
     j       all_done
     # j 指令：PC = PC[31:28] | 后面的 28 位地址。这里表示 spin waiting
     # （另一种说法是这里用 b，不过 1. 不知道是否正确以及副作用，2. 感觉 j 至少没错）
+    # ## RE: b的操作数是偏移，需要计算当前PC值和all_done地址的差，容易算错，不如j
     nop
 
 END(__cpu_init)

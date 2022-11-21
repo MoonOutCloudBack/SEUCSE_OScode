@@ -54,9 +54,9 @@ _mips_general_exception:  # 中断处理地址
 		 * to implement software exceptions in the future.
 		 */
 
-		andi k1,0x7c #取出中断号 0x7c = 01111100,对应CAUSE的 ExcCode 位，因此k1存储的实际上是左移两位的中断号
+		andi k1,0x7c # 取出中断号 0x7c = 01111100,对应CAUSE的 ExcCode 位，因此k1存储的实际上是左移两位的中断号
 		addu k0,k1 # k0 = k0+k1，即为中断向量表中的相应处理地址 (由于一个地址占4个存储单元，而k1正好是中断号*4，因此直接相加即可)
-		lw k0,(k0) #把内存中k0地址处的值赋给k0
+		lw k0,(k0) # 把内存中k0地址处的值赋给k0
 
 		nop
 		jr k0 #跳到对应中断处理地址(上下文的保存应该是由各自的处理程序完成的，因为不同的异常对上下文保存的要求不同)
@@ -67,8 +67,8 @@ _mips_general_exception:  # 中断处理地址
 		# .set	pop
 
 
-.data #数据段开始标志
-			.globl kernel_sp		#save the sp register when exception occur
+.data # 数据段开始标志
+			.globl kernel_sp		# save the sp register when exception occur
 kernel_sp:
 			.word 0
 
@@ -78,7 +78,7 @@ mCONTEXT:	# 应该就是放着内核栈底常数 0x80400000
 
 			.globl exception_handlers
 exception_handlers: # 应该就是中断向量的入口地址，从这里开始按中断号索引可以找到每个中断的处理地址
-			.word 0:31 #.word就是指在这里放一个常量,exception_handlers是其地址（31表示连续放31个0）
+			.word 0:31 # .word就是指在这里放一个常量,exception_handlers是其地址（31表示连续放31个0）
 
 			.globl delay
 delay:
@@ -96,7 +96,7 @@ curtf:
 
 
 
-.text #代码段开始标志
+.text # 代码段开始标志
 LEAF(_start)
 
 	.set	reorder
@@ -142,7 +142,7 @@ LEAF(_start)
 	mtc0    t0, CP0_CONFIG
 
 	/* set up stack */
-	#KERNEL的栈顶位置,16K
+	# KERNEL的栈顶位置,16K
 	li      sp, 0x80400000 # 切到内核栈顶
 
 	li      t0,0x80400000

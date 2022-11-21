@@ -1,5 +1,6 @@
 #include <mips/cpu.h>
 #include <../inc/string.h>
+// 从src复制len位到dst
 void bcopy(const void *src, void *dst, size_t len)
 {
 	void *max;
@@ -16,16 +17,16 @@ void bcopy(const void *src, void *dst, size_t len)
 		src += 1;
 	}
 }
-
+// 从b开始填充len个0位
 void bzero(void *b, size_t len)
 {
 	void *max;
 	max = b + len;
-	while (b + 3 < max) {
+	while (b + 3 < max) {	// 先四位四位填比较快
 		*(int *)b = 0;
 		b += 4;
 	}
-	while (b < max) {
+	while (b < max) {	// 剩下的一位一位填
 		*(char *)b++ = 0;
 	}
 }

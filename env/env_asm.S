@@ -12,7 +12,7 @@ KERNEL_SP:
 	.text
 	.set noat
 	
-# 虽然不知道什么意思，但还是抄了指导手册的代码
+# 从栈中恢复上下文数据，写回各个寄存器
 LEAF(env_pop_tf)
 	.set noreorder
 
@@ -21,19 +21,23 @@ LEAF(env_pop_tf)
 	# ra：先 sw ra,28(sp)     在最末尾又 lw ra,28(sp)       然后 jr ra
 	# 虽然我并不懂
 
+	# ## RE: 是否需要那样写与caller还是callee清理堆栈有关，可以参考函数调用规范(Calling convention) 。
+	# C语言默认的cdecl是caller清理堆栈。不过这里只有一个参数，直接寄存器传参就行了
+
 
 	# 首先得到 要恢复进程的上下文地址 &env_tf 的基址
 	move	k0, a0			# k0 = &(curenv->env_tf), k0 - k7 是 kernel registers
 
 	# 从该基址加载 CP0 的状态寄存器
+	# TF_CAUSE、TF_LO、TF_HI等宏保存的是相对于k0的偏移
 	lw 		k1, TF_CAUSE(k0)
 	mtc0	k1, C0_CAUSE
 	lw		v1,	TF_LO(k0)
-	mtlo	v1	
+	mtlo	v1	# 恢复累加器低位
 	lw		v0,	TF_HI(k0)
-	mthi	v0	
+	mthi	v0	# 恢复累加器高位
 	lw 		v1, TF_EPC(k0)
-	# li		v1, 0x15001f90
+	# li		v1, 0x15001f90 # 这是什么魔数？
 	mtc0	v1,	C0_EPC
 	ehb
 
@@ -72,6 +76,7 @@ LEAF(env_pop_tf)
 	# 开启中断，设为用户模式
 	mfc0	k0, C0_STATUS		# 读到 status
 	li		k1, 0x11			# 设为 USER MODE, 并开启中断
+	# TODO: 这里可以用ext和ins增加可读性
 	# status 第 0 位是 IE 中断使能，1 为可以中断（IE = 1，EXL = 0，ERL = 0，才可以中断）
 	# status 第 4 位是 UM 用户模式，0 表示 kernal mode，1 表示 user mode
 	or		k0, k1				# or 一下，置几个 1
@@ -85,6 +90,7 @@ LEAF(env_pop_tf)
 	ehb
 	eret						# 回 epc
 								# eret 明明是回 ErrorEPC，不过代码都这样给了，应该可以跑通吧
+								# RE eret的行为与ERL位有关。如果ERL为1，返回的是ErrorEPC，否则是EPC（RTFM p.156）
 	nop
 
 
@@ -158,6 +164,7 @@ LEAF(get_nested_epc)
 	nop
 END(get_nested_epc)
 
+# 实际上是CP0_STATUS的EXL位 置0（0表示user mode）
 LEAF(set_exl)
 	mfc0 	v0, CP0_STATUS
 	li k0,0xFFFFFFFD
