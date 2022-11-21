@@ -65,7 +65,7 @@ int envid2env(u_int envid, struct Env **penv, int checkperm)
 		return 0;
 	}
 	e = envs + GET_ENV_ASID(envid); 
-	if (e->env_status == ENV_FREE || e->env_id != envid) //todo 为什么检查free，这个函数啥时候调用
+	if (e->env_status == ENV_FREE || e->env_id != envid) // ENV_FREE表示进程列表的这个位置是空的
 	{
 		*penv = 0;
 		return -E_BAD_ENV;
@@ -79,7 +79,7 @@ int envid2env(u_int envid, struct Env **penv, int checkperm)
 	/*Step 2: Make a check according to checkperm. */
 	if (checkperm)
 	{
-		if (e != curenv && e->env_parent_id != curenv->env_id)
+		if (e != curenv && e->env_parent_id != curenv->env_id)	// 调用子进程时的检查
 		{
 			*penv = 0;
 			return -E_BAD_ENV;
@@ -108,6 +108,7 @@ void env_init(void)
 }
 
 // 初始化 e 的虚拟地址空间
+// TODO 参考代码：https://www.cnblogs.com/CindyZhou/p/12852837.html
 static int
 env_setup_vm(struct Env *e)
 {
@@ -126,12 +127,28 @@ env_setup_vm(struct Env *e)
 	}
 	p->pp_ref++;
 	pgdir = (Pde *)(page2kva(p));
+	e->env_pgdir = pgdir;
+	e->env_cr3 = page2pa(p);
 
 	/*Step 2: Zero pgdir's field before UTOP. */
 	for (i = 0; i < PDX(UTOP); i++)
 	{
 		pgdir[i] = 0x0;
 	}
+
+	// TODO: Step 3 来自参考代码，不知道是否需要映射UTOP以上部分
+	/*Step 3: Copy kernel's boot_pgdir to pgdir. */
+    /* Hint:
+     *  The VA space of all envs is identical above UTOP
+     *  (except at UVPT, which we've set below).
+     *  See ./include/mmu.h for layout.
+     *  Can you use boot_pgdir as a template?
+     */
+	/*
+    for(i=PDX(UTOP);i<=PDX(~0);i++){
+        pgdir[i]=boot_pgdir[i];
+    }
+	*/
 
 	/*VPT and UVPT map the env's own page table, with
  *      *different permissions. */
@@ -264,6 +281,7 @@ uint32_t get_ddr_base()
 	return 0x80000000;
 }
 
+// 从文件系统中读取elf_name，加载到e
 uint32_t load_elf_mapper(char *elf_name, struct Env *e)
 {
 	FIL fil;																		 // File object
@@ -374,7 +392,7 @@ load_icode(struct Env *e, char *elf_name)
 	/*Step 2: Use appropriate perm to set initial stack for new Env. */
 	/*Hint: The user-stack should be writable? */
 	perm = PTE_V | PTE_R;
-	r = page_insert(e->env_pgdir, p, USTACKTOP - BY2PG, perm);
+	r = page_insert(e->env_pgdir, p, USTACKTOP - BY2PG, perm);	// USTACKTOP向下增长一页的大小
 	if (r < 0)
 	{
 		printf("error,load_icode:page_insert failed\n");
@@ -502,7 +520,7 @@ void env_create_share(char *binary, int num, int priority)
 	int r;
 	extern void debug();
 	/*Step 1: Use env_alloc to alloc a new env. */
-	r = (r = env_alloc(&e, 0));
+	r = env_alloc(&e, 0);
 	if (r < 0)
 	{
 		panic("sorry, env_create_priority:env_alloc failed");

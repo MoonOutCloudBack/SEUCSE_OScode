@@ -68,10 +68,10 @@ LEAF(init_gpr)
 
 	# // Determine how many shadow sets are implemented (in addition to the base register set.)
 	# // the first time thru the loop it will initialize using $1 set above.
-	# // At the bottom og the loop, 1 is  subtract from $30
+	# // At the bottom of the loop, 1 is subtract from $30
 	# // and loop back to next_shadow_set to start the next loop and the next lowest set number.
 	mfc0	$29, C0_SRSCTL		# read C0_SRSCtl
-	ext	    $30, $29, 26, 4		# extract HSS
+	ext	    $30, $29, 26, 4		# extract HSS，读取影子寄存器的组数
 
 next_shadow_set:
 	# set PSS to shadow set to be initialized

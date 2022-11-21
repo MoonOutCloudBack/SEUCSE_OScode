@@ -12,7 +12,7 @@ extern void handle_addr();
 extern void handle_mult_tlb();
 
 extern unsigned long exception_handlers[32];  //exception_handlers define at start.S
-
+// 初始化中断向量表
 void trap_init()
 {
     int i;
@@ -31,6 +31,7 @@ void trap_init()
     set_except_vector(8, handle_sys);
     set_except_vector(24, handle_mult_tlb);
 }
+//将向量表的n设置为addr，并返回*修改前*的值
 void *set_except_vector(int n, void *addr)
 {
     unsigned long handler = (unsigned long)addr;

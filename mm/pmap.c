@@ -432,17 +432,20 @@ struct Page* create_share_vm(int key, size_t size)
     {
         printf(" ### create_share_vm ### \n");
         //默认申请size小于一个页先 todo
+        assert(size <= BY2PG); // TODO，暂时只允许小于一个页的size
         struct Page *p = NULL;
-        uint32_t entry_point;
+        uint32_t entry_point;   // TODO entry_point 有什么用
         u_long r;
-        u_long perm;
+        u_long perm;   // TODO perm 有什么用
         /*Step 1: alloc a page. */
         perm = PTE_V | PTE_R;
-        // TODO
-
-
-
-
+        
+        r = page_alloc_share(&p);
+        if(r < 0) {
+            panic("cannot allocate shared page\n");
+            return NULL;
+        }
+        // p->pp_ref++; 递增由caller处理
 
         tryHashTableInsert(&ht, key, p);
         printf(" ####### insert shared page entry####### %x \n",p);
@@ -456,17 +459,18 @@ void* insert_share_vm(struct Env *e, struct Page *p)
 {
     u_long perm;
     u_long r;
-    perm = PTE_V | PTE_R;
+    perm = PTE_V | PTE_R;   // TODO: do we need PTE_R?
     /*Step 2: Use appropriate perm to set initial stack for new Env. */
     /*Hint: The user-stack should be writable? */
-    r = page_insert(e->env_pgdir, p, ???,perm      );  //TODO VA下移两个页
+    r = page_insert(e->env_pgdir, p, e->heap_pc, perm);  //TODO VA下移两个页 // 什么意思？
     if (r < 0)
     {
         printf("error,load_icode:page_insert failed\n");
         return NULL;
     }
-    e->heap_pc = e->heap_pc + ???;   // 堆向上生长
-    int *result =               ;
+    
+    void *result = e->heap_pc;
+    e->heap_pc = e->heap_pc + BY2PG;   // 堆向上生长
     return result;
 }
 

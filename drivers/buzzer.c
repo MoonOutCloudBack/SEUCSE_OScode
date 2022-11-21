@@ -18,7 +18,7 @@ void delay_do()
     volatile unsigned int j = 0;
     for (; j < 2500000; j++)
         set_buzzers(1);
-    set_buzzers(0)
+    set_buzzers(0);
 }
 void delay_re()
 {
@@ -26,49 +26,49 @@ void delay_re()
 volatile unsigned int j = 0;
     for (; j < 2500000; j++)
         set_buzzers(2);
-    set_buzzers(0)
+    set_buzzers(0);
 }
 void delay_mi()
 {
    volatile unsigned int j = 0;
     for (; j < 2500000; j++)
         set_buzzers(3);
-    set_buzzers(0)
+    set_buzzers(0);
 }
 void delay_long_mi()
 {
     volatile unsigned int j = 0;
     for (; j < 5000000; j++)
         set_buzzers(3);
-    set_buzzers(0)
+    set_buzzers(0);
 }
 void delay_fa()
 {
     volatile unsigned int j = 0;
     for (; j < 2500000; j++)
         set_buzzers(4);
-    set_buzzers(0)
+    set_buzzers(0);
 }
 void delay_so()
 {
    volatile unsigned int j = 0;
     for (; j < 2500000; j++)
         set_buzzers(5);
-    set_buzzers(0)
+    set_buzzers(0);
 }
 void delay_la()
 {
     volatile unsigned int j = 0;
     for (; j < 2500000; j++)
         set_buzzers(6);
-    set_buzzers(0)
+    set_buzzers(0);
 }
 void delay_xi()
 {
     volatile unsigned int j = 0;
     for (; j < 2500000; j++)
         set_buzzers(7);
-    set_buzzers(0)
+    set_buzzers(0);
 }
 
 //0 
