@@ -63,6 +63,10 @@ extern struct Env *envs;			// All environments, 包含我们所有的进程控�
 extern struct Env *curenv;	        // the current env
 // extern struct Env_list env_sched_list[2]; // runnable env list
 
+extern struct Env *env_runnable_head;
+extern struct Env *env_runnable_tail;
+extern struct Env *env_free_list; 
+
 void env_init(void);
 int env_alloc(struct Env **e, u_int parent_id);
 int env_free(struct Env *);
