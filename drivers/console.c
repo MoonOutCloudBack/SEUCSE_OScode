@@ -130,7 +130,10 @@ void cons_init(void) { serial_init(); vga_print_init(); }
 
 // `High'-level console I/O.  Used by readline and cprintf.
 
-void cputchar(int c) { cons_putc(c); }
+void cputchar(int c) {
+	cons_putc(c);
+	vga_print_char(c);
+}
 
 int getchar(void) {
 	int c;
