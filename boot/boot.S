@@ -107,6 +107,12 @@ init_resources:                 # initializes resources for "cpu".
     jr      t0
     nop
 
+    #Initialize the Instruction cache
+
+    # la      a2, init_icache     # Initialize the L1 instruction cache. (Executing using I$ on return.)
+    # jalr    a2
+    # nop
+
 
     # The changing of Kernel mode cacheability must be done from KSEG1
     # Since the code is executing from KSEG0 It needs to do a jump to KSEG1 change K0 and jump back to KSEG0
@@ -135,6 +141,12 @@ init_resources:                 # initializes resources for "cpu".
     # 在这里，表示将 change_k0_cca 第 29 位, 置为 1
     jr          t0
     nop
+
+    # Initialize the Data cache
+
+    # la      a2, init_dcache     # Initialize the L1 data cache
+    # jalr    a2
+    # nop
     
 
     # Prepare for eret to main.
