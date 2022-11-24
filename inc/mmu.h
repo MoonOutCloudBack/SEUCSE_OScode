@@ -99,7 +99,8 @@
 #define USTACKTOP (UTOP - 2*BY2PG)
 
 #define UTEXT 0x15000000
-
+#define UPAGES (UVPT - PDMAP)
+#define UENVS (UPAGES - PDMAP)
 
 #define E_UNSPECIFIED	1	// Unspecified or unknown problem
 #define E_BAD_ENV       2       // Environment doesn't exist or otherwise
