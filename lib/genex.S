@@ -41,8 +41,8 @@ page_fault:  	# page fault occur，新建页
 	
 	               # 引发中断的虚拟地址
 	# 传参
-	mfc0	a0,CP0_BADVADDR
-    lw		a1,mCONTEXT               
+	lw		a0,mCONTEXT
+	mfc0	a1,CP0_BADVADDR               
 
 	jal	pageout    # 创建页
 	nop
