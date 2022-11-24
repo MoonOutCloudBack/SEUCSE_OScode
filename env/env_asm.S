@@ -1,6 +1,7 @@
-#include <mips/regdef.h>
-#include <mips/m32c0.h>
-#include <mips/asm.h>
+#include <inc/asm/regdef.h>
+#include <inc/asm/cp0regdif.h>
+#include <inc/asm/asm.h>
+#include <inc/m32c0.h>
 #include <inc/trap.h>
 			.data
 			.globl	KERNEL_SP 
