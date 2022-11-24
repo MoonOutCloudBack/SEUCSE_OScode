@@ -1,7 +1,7 @@
 INCLUDES	:= -I./ -I../ -I../inc/ 
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -std=c11 -c $<
+	$(CC) $(CFLAGS) $(INCLUDES) -std=gnu11 -c $<
 
 %.o: %.S
 	$(CC) $(CFLAGS) $(INCLUDES) -c $<
