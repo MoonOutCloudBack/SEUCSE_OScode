@@ -9,12 +9,23 @@
 #include <../inc/types.h>
 #include <../inc/env.h>
 #include <../inc/string.h>
+#include <../drivers/console.h>
+#include <../drivers/leds.h>
+#include <../drivers/switches.h>
+
 extern char *KERNEL_SP;
 extern struct Env *curenv;
 
 #define BUFLEN 1024
 char myelf[BUFLEN] = {0};
 char myargv[BUFLEN] = {0};
+
+extern struct Page* create_share_vm(int key, size_t size);
+extern void* insert_share_vm(struct Env *e, struct Page *p);
+extern void env_create_priority_arg(char *binary, int priority, char *arg);
+extern void pthread_create(void *func, int arg);
+extern void readline(const char *prompt, char *ret, int getargv);
+
 
 /* Overview:
  * 	This function is used to print a character on screen.
@@ -72,13 +83,13 @@ int sys_env_create(int sysno, char *binary, int pt, char *arg)
 	{
 		int i = 0;
 		// 把 arg 读到 myargv 里
-		for (i = 0; arg[i]; i++) {
+		for (int i = 0; arg[i]; i++) {
 			myargv[i] = arg[i];
 		}
 		myargv[i] = 0;
 		printf("\n");
 		// 把 binary 读到 myelf 里		
-		for (i = 0; binary[i]; i++) {
+		for (int i = 0; binary[i]; i++) {
 			myelf[i] = binary[i];
 		}
 		printf("\n");
@@ -89,7 +100,7 @@ int sys_env_create(int sysno, char *binary, int pt, char *arg)
 	else
 	{
 		// 把 binary 读到 myelf 里		
-		for (i = 0; binary[i]; i++) {
+		for (int i = 0; binary[i]; i++) {
 			myelf[i] = binary[i];
 		}
 		printf("\n");
@@ -683,7 +694,7 @@ void sys_ipc_recv(int sysno, u_int dstva)
 	remaining_time = 0;
 	void *src = KERNEL_SP - sizeof(struct Trapframe);
 	void *dst = TIMESTACK - sizeof(struct Trapframe);
-	bcopy(src, dst, sizeof(struct Trapframe)); // 应该就是 binary copy 吧
+	bcopy(src, dst, sizeof(struct Trapframe)); // bit copy
 	sched_yield();
 }
 
@@ -732,7 +743,7 @@ int sys_write_dev(int sysno, u_int va, u_int dev, u_int len)
 		return -E_INVAL;
 	}
 	startaddr += 0xa0000000; // 直接虚拟地址 -> 物理地址
-	bcopy(va, startaddr, len); // copy 过去
+	bcopy((void *) va, (void *) startaddr, len); // copy 过去
 	return 0;
 }
 
@@ -766,7 +777,7 @@ int sys_read_dev(int sysno, u_int va, u_int dev, u_int len)
 		return -E_INVAL;
 	}
 	startaddr += 0xa0000000; // 直接虚拟地址 -> 物理地址
-	bcopy(startaddr, va, len); // copy 回来
+	bcopy((void *) startaddr, (void *) va, len); // copy 回来
 	return 0;
 }
 
@@ -798,7 +809,7 @@ u32 sys_get_switchs(int sysno)
  */
 void sys_readline(int sysno, const char *prompt, char *ret, int getargv)
 {
-	return readline(prompt, ret, getargv);
+	readline(prompt, ret, getargv);
 }
 
 extern int cur_sched;
@@ -853,9 +864,10 @@ int sys_fread(int sysno, char *path)
 		printf("Failed to open file!\n\r", 0);
 		return (int)fr;
 	}
-	uint32_t *read_file_buf = 0x89a00000;
+	// uint32_t *read_file_buf = 0x89a00000;
+	uint16_t *read_file_buf = 0x89a00000;
 	char *str = f_gets(read_file_buf, 1024, &fil);
-	str[1023] = "\0";
+	str[1023] = '\0';
 
 	if (fil.fsize != 0)
 		printf(str);
