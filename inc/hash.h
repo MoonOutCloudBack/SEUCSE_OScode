@@ -1,6 +1,6 @@
 //共享内存 Hash表
 
-
+#include "stdio.h"
 #define HashMaxSize 10    //宏定义哈希表的最大容量
 #define LoadFactor 0.8       //宏定义负载因子，用于表示哈希表的负载能力。
 
@@ -8,7 +8,7 @@
 
 typedef int KeyType;         
 typedef struct Page* ValueType;
-typedef size_t(*HashFunc)(KeyType key);     //重定义哈希函数
+typedef size_t (*HashFunc)(KeyType key);     //重定义哈希函数
 
 typedef enum elm_State     //用于表示每个元素的状态
 {

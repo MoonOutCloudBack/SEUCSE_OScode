@@ -31,6 +31,7 @@ extern u32 get_status();
 
 extern void device_init();
 extern void sys_init();
+extern void tryHashTableInit(HashTable *ht);
 
 void interface_init()
 {
