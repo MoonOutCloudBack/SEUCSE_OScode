@@ -14,6 +14,7 @@
 #include <../drivers/vga_print.h> 
 #include <../drivers/console.h> 
 #include <../drivers/diskio.h> 
+#include <../inc/m32c0.h>
 
 #define K_ENV 0x88000000
 #define KENV_A 0x88010000
@@ -52,9 +53,9 @@ void time_setup()
     char * buf;
     char * h, *m, *s;
     printf("Please setup the system time(xx:xx:xx) \n");
-    h = readline("hour> ");
-    m = readline("minute> ");
-    s = readline("sec> ");
+    readline("hour> ", h, 0);
+    readline("minute> ", m, 0);
+    readline("sec> ", s, 0);
     
     set_seven_seg_value(*s);
 }
