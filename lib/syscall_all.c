@@ -865,7 +865,7 @@ int sys_fread(int sysno, char *path)
 		return (int)fr;
 	}
 	// uint32_t *read_file_buf = 0x89a00000;
-	uint16_t *read_file_buf = 0x89a00000;
+	TCHAR *read_file_buf = 0x89a00000;
 	char *str = f_gets(read_file_buf, 1024, &fil);
 	str[1023] = '\0';
 
