@@ -8,7 +8,7 @@
 
 typedef int KeyType;         
 typedef struct Page* ValueType;
-typedef size_t(*HashFunc)(KeyType key);     //重定义哈希函数
+typedef (size_t) ((*HashFunc)(KeyType key));     // 重定义哈希函数
 
 typedef enum elm_State     //用于表示每个元素的状态
 {

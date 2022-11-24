@@ -40,7 +40,7 @@ _mips_general_exception:  # 中断处理地址
 		 * Register saving is delayed as long as we dont know
 		 * which registers really need to be saved.
 		 */
-  1:	//j	1b
+#   1:	//j	1b
 # 	nop
 
 		sw		sp, kernel_sp 
@@ -128,6 +128,7 @@ LEAF(_start)
     la v0, _fbss
 	la v1, _end
 	beq v0,v1,2f # if([v0]==[v1]) PC = PC + signExtened(2f<<2)
+1:
 	addiu v0,v0,4
 	nop
 	sw zero,-4(v0)
