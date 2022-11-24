@@ -17,6 +17,9 @@ extern char myargv[BUFLEN];
 //CTRL+C 3
 //CTRL+D 4
 //CTRL+U 21
+
+extern void readline(const char *prompt, char *ret, int getargv);
+
 void readline(const char *prompt, char *ret, int getargv)
 {
 	if (getargv)

@@ -2,6 +2,9 @@
 
 #include <mips/cpu.h>
 #include <mfp_io.h>
+
+extern u32 get_asid();
+
 static u32 led_status[3]; // 记录每组led的状态，初始化后为 -1（因为是无符号所以实际上是全1）
 
 void led_init(){

@@ -7,10 +7,13 @@
 #include <trap.h>
 #include <../inc/types.h>
 #include <../inc/rtThread.h>
+#include <../inc/hash.h>
 #include <../drivers/leds.h>
 #include <../drivers/switches.h>
 #include <../drivers/seven_seg.h> 
 #include <../drivers/vga_print.h> 
+#include <../drivers/console.h> 
+#include <../drivers/diskio.h> 
 
 #define K_ENV 0x88000000
 #define KENV_A 0x88010000
@@ -20,6 +23,13 @@ u32 v,t;
 
 extern int mCONTEXT;
 extern struct HashTable ht;
+
+extern void readline(const char *prompt, char *ret, int getargv);
+extern void asid_list_init();
+extern u32 get_status();
+
+extern void device_init();
+extern void sys_init();
 
 void interface_init()
 {

@@ -704,7 +704,7 @@ void tlb_invalidate(Pde *pgdir, u_long va)//
 }
 
 
-extern int get_asid();
+extern u32 get_asid();
 
 
 uint32_t pageout(uint32_t va, uint32_t context)

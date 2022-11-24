@@ -3,6 +3,8 @@
 #include <mips/cpu.h>
 #include <mfp_io.h>
 
+extern u32 get_asid();
+
 static u32 seg_status[4]; // 记录数码管的状态
 
 u32 get_seven_seg_enable() { return mips_get_word(SEVEN_SEG_EN_ADDR, NULL); }

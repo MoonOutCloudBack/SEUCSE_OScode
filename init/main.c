@@ -2,6 +2,9 @@
 #include "../inc/printf.h"
 FATFS FatFs;   // Work area (file system object) for logical drive
 
+extern void device_init();
+extern void sys_init();
+
 int main()
 {
 	//my_fs_init();

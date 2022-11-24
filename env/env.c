@@ -25,7 +25,7 @@ extern int remaining_time;
 extern void env_pop_tf(struct Trapframe *tf);
 extern void lcontext(uint32_t contxt, int n);
 extern void set_asid(uint32_t id);
-extern int get_asid();
+extern u32 get_asid();
 extern void set_epc(uint32_t epc);
 
 // 申请一个 envid, 低位为 e 在 envs 中的位置，高位为自增编号
