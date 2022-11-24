@@ -9,6 +9,7 @@
 #include <printf.h>
 #include <../fs/ff.h>
 #include <../fs/elf.h>
+#include <../drivers/timer.h>
 
 struct Env *envs = NULL;   // All environments
 struct Env *curenv = NULL; // the current env
@@ -27,6 +28,10 @@ extern void lcontext(uint32_t contxt, int n);
 extern void set_asid(uint32_t id);
 extern u32 get_asid();
 extern void set_epc(uint32_t epc);
+extern struct Page* create_share_vm(int key, size_t size);
+extern void* insert_share_vm(struct Env *e, struct Page *p);
+extern u32 get_status();
+extern void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg);
 
 // 申请一个 envid, 低位为 e 在 envs 中的位置，高位为自增编号
 u_int mkenvid(struct Env *e)
@@ -619,7 +624,7 @@ void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg) // 不
 	if ((r = page_alloc(&p)) < 0)
 	{
 		panic("env_setup_vm - page alloc error\n");
-		return r;
+		return;
 	}
 	p->pp_ref++;
 	pgdir = (Pde *)(page2kva(p));
@@ -680,7 +685,6 @@ void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg) // 不
 	e->env_pgdir[PDX(UVPT)] = e->env_cr3 | PTE_V | PTE_R;
 	printf("### e->CONTEXT: 0x%x \n", e->env_pgdir);
 
-	return;
 }
 
 // 释放进程

@@ -8,3 +8,7 @@ int cons_getc(void);
 void cputchar(int c);
 
 void serial_intr(void);
+
+int getchar(void);
+
+int iscons(int fdnum);

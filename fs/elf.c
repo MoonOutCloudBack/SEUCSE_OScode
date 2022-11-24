@@ -44,18 +44,18 @@ int memCpy(void *dest, void *src, uint32_t n)
 int load_elf(const uint8_t *elf, const uint32_t elf_size) {
   // sanity checks
 
-  // 无论如何, elf 文件也得有头表 (ELF32_Ehdr) 这么大吧
-  if(elf_size <= sizeof(ELF32_Ehdr))
+  // 无论如何, elf 文件也得有头表 (Elf32_Ehdr) 这么大吧
+  if(elf_size <= sizeof(Elf32_Ehdr))
     return 1;                   /* too small */
 
   // 得到 ELF 头表
-  const ELF32_Ehdr *eh = (const ELF32_Ehdr *) elf; 
+  const Elf32_Ehdr *eh = (const Elf32_Ehdr *) elf; 
   // 判一下是否 ELF, 定义在 elf.h
   if(!IS_ELF32(*eh))
     return 2;                   /* not a elf32 file */
 
   // 得到程序头表的起始地址, e_phoff 是程序头表偏移
-  const ELF32_Phdr *ph = (const ELF32_Phdr *)(elf + eh->e_phoff); 
+  const Elf32_Phdr *ph = (const Elf32_Phdr *)(elf + eh->e_phoff); 
   // 得到的 elf 文件, 怎么还没有 (据推测) 所有程序头表加起来那么大
   if(elf_size < eh->e_phoff + eh->e_phnum*sizeof(*ph)) 
     return 3;                   /* internal damaged */
@@ -88,14 +88,14 @@ int load_elf_sd(const uint8_t *elf, const uint32_t elf_size) {
   // 貌似跟上面 load_elf 一模一样
   
   // sanity checks
-  if(elf_size <= sizeof(ELF32_Ehdr))
+  if(elf_size <= sizeof(Elf32_Ehdr))
     return 1;                   /* too small */
 
-  const ELF32_Ehdr *eh = (const ELF32_Ehdr *) elf;
+  const Elf32_Ehdr *eh = (const Elf32_Ehdr *) elf;
   if(!IS_ELF32(*eh))
     return 2;                   /* not a elf32 file */
 
-  const ELF32_Ehdr *ph = (const ELF32_Ehdr *)(elf + eh->e_phoff);
+  const Elf32_Phdr *ph = (const Elf32_Ehdr *)(elf + eh->e_phoff);
   if(elf_size < eh->e_phoff + eh->e_phnum*sizeof(*ph))
     return 3;                   /* internal damaged */
 
@@ -112,6 +112,7 @@ int load_elf_sd(const uint8_t *elf, const uint32_t elf_size) {
       if(ph[i].p_memsz > ph[i].p_filesz) {              /* zero padding */
         memSet((uint8_t *)ph[i].p_paddr + ph[i].p_filesz, 0, ph[i].p_memsz - ph[i].p_filesz);
       }
+  }
   }
   return 0;
 }

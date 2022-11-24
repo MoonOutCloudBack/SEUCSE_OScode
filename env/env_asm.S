@@ -1,8 +1,8 @@
-#include <inc/asm/regdef.h>
-#include <inc/asm/cp0regdif.h>
-#include <inc/asm/asm.h>
-#include <inc/m32c0.h>
-#include <inc/trap.h>
+#include <asm/regdef.h>
+#include <asm/cp0regdef.h>
+#include <asm/asm.h>
+#include <m32c0.h>
+#include <trap.h>
 			.data
 			.globl	KERNEL_SP 
 KERNEL_SP:
@@ -75,7 +75,7 @@ LEAF(env_pop_tf)
 	
 
 	# 开启中断，设为用户模式
-	mfc0	k0, C0_STATUS		# 读到 status
+	mfc0	k0, CP0_STATUS		# 读到 status
 	li		k1, 0x11			# 设为 USER MODE, 并开启中断
 	# TODO: 这里可以用ext和ins增加可读性
 	# status 第 0 位是 IE 中断使能，1 为可以中断（IE = 1，EXL = 0，ERL = 0，才可以中断）
@@ -86,7 +86,7 @@ LEAF(env_pop_tf)
 	# user mode 大概是不允许的
 	# status 第 21 位（那个 D 置零的位）是 TS，表示 TLB 是否被关闭，发生 TLB 严重错误时 TS = 1
 	and		k0, k1				# and 一下，置几个 0
-	mtc0	k0, C0_STATUS		# 把 status 写回去
+	mtc0	k0, CP0_STATUS		# 把 status 写回去
 
 	ehb
 	eret						# 回 epc

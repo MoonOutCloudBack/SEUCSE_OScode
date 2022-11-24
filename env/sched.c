@@ -2,6 +2,8 @@
 #include <pmap.h>
 #include <printf.h>
 
+extern u32 get_status();
+
 /* Overview:
  *  Implement simple round-robin scheduling.
  *  Search through 'envs' for a runnable environment ,

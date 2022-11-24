@@ -25,7 +25,7 @@ void readline(const char *prompt, char *ret, int getargv)
 		for (i = 0; i < BUFLEN - 1 && myargv[i]; i++)
 			ret[i] = myargv[i];
 		ret[i] = 0;
-		return ret;
+		//return ret;
 	}
 	int i, c, echoing;
 	if (prompt != NULL)
@@ -40,7 +40,7 @@ void readline(const char *prompt, char *ret, int getargv)
 		if (c < 0)
 		{
 			printf("read error: %e\n", c);
-			return NULL;
+			//return NULL;
 		}
 		else if (flag91 && c > 64 && c < 69)
 		{
@@ -119,7 +119,7 @@ void readline(const char *prompt, char *ret, int getargv)
 
 			for (int i = 0; i < BUFLEN; i++)
 				ret[i] = buf[i];
-			return ret;
+			//return ret;
 		}
 	}
 }
