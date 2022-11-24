@@ -1,7 +1,7 @@
 INCLUDES := -I../inc 
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -fno-builtin $<
 
 .PHONY: clean
 

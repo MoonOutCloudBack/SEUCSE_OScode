@@ -25,8 +25,8 @@ NESTED(handle_tlb, TF_SIZE, sp)
 
 	mfc0	k0,CP0_BADVADDR  # 引发中断的虚拟地址
 	# a0,a1是后面va2pa()的两个参数,两个参数的意义?
-	mfc0	a0, mCONTEXT
-    lw	a1,	CP0_BADVADDR		 
+	lw	a0, mCONTEXT
+    mfc0	a1,	CP0_BADVADDR		 
 	                         
 	jal		va2pa_print		# 这个函数会查页表，看有没有虚拟地址对应的物理页
 	nop
@@ -107,7 +107,7 @@ tlb_refill_done:
 	nop
 	nop
 	mfc0 k0,CP0_INDEX
-	# if co0_index==1 goto oldTlb
+	// if co0_index==1 goto oldTlb
 	li	k1,0x1
 	beq	k0,k1,oldTlb
 	
