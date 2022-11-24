@@ -44,11 +44,12 @@ OF SUCH DAMAGE.
 
 #define _RESETCODE 1
 
-#include <mips/regdef.h>
-#include <mips/asm.h>
+#include <asm/regdef.h>
+#include <asm/asm.h>
+#include <asm/cp0regdef.h>
 #include "boot.h"
 #include "mfp_io.h"
-#include <mips/m32c0.h>
+#include <m32c0.h>
 
 .set    noreorder               # Don't allow the assembler to reorder instructions.
 # 解释：默认情况下，MIPS 汇编器会尝试重新排序周围的指令，自动填充分支、加载延迟槽。
@@ -85,10 +86,10 @@ LEAF(__cpu_init)
     # 无论状态寄存器中 IE 位（interrput enable，1 为 enable）如何, CPU 收到有效的 NMI 必须响应，不能屏蔽
     # 通常用于故障处理（协处理器运算出错, 存储器校验出错, I/O 通道校验出错等）
 
-    mfc0    s1, CP0_STATUS          # Read CP0 Status, t 寄存器可以随便用
-    ext     s1, s1, 19, 1           # extract NMI. NMI 位：1 表示是不可屏蔽中断，软件只能对其写入 0
+    mfc0    t0, CP0_STATUS          # Read CP0 Status, t 寄存器可以随便用
+    ext     t0, t0, 19, 1           # extract NMI. NMI 位：1 表示是不可屏蔽中断，软件只能对其写入 0
 	# ext 指令： ext rD,rS,pos,size：  rD <= rS[pos+size-1:pos]。 extract bit field，提取一部分 bits，
-    beqz    s1, init_resources      # Branch if this is NOT an NMI exception.
+    beqz    t0, init_resources      # Branch if this is NOT an NMI exception.
     nop
     sdbbp                           # Failed assertion: NMI. 那么，现在要处理 NMI 中断了
     # sdbbp 指令：产生 EJTAG 异常的断点指令。如果执行遇到 sdbbp，则触发调试异常（断点）
@@ -97,13 +98,13 @@ LEAF(__cpu_init)
 init_resources:                 # initializes resources for "cpu".
 
     # Initialize CP0 registers
-    la      a2, init_cp0        # Init CP0 Status, Count, Compare, Watch*, and Cause.
-    jr      a2
+    la      t0, init_cp0        # Init CP0 Status, Count, Compare, Watch*, and Cause.
+    jr      t0
     nop
 
     # Initialize the TLB
-    la      a2, init_tlb        # Generate unique EntryHi contents per entry pair，以防 tlb 重复项而关闭
-    jr      a2
+    la      t0, init_tlb        # Generate unique EntryHi contents per entry pair，以防 tlb 重复项而关闭
+    jr      t0
     nop
 
 
@@ -127,12 +128,12 @@ init_resources:                 # initializes resources for "cpu".
     # 因此，程序运行的起始地址 0xbfc00000 实际上是物理地址 0x1fc00000
     # #######################
 
-    la          a2, change_k0_cca   # load address，change_k0_cca 在 init_cache 里
-    li          a1, 0x1             # load immediate
-    ins         a2, a1, 29, 1       # changed to KSEG1 address by setting bit 29
+    la          t0, change_k0_cca   # load address，change_k0_cca 在 init_cache 里
+    li          t1, 0x1             # load immediate
+    ins         t0, t1, 29, 1       # changed to KSEG1 address by setting bit 29
     # ins 指令：rD, rS, pos, size;  insert，rD[P+S-1:P] = rS[S-1:0]
     # 在这里，表示将 change_k0_cca 第 29 位, 置为 1
-    jr          a2
+    jr          t0
     nop
     
 
@@ -198,9 +199,9 @@ END(__cpu_init)
 
 .org 0x380    /* General exception. */
     # display alternating one-zeros on board LEDs
-    li      k0, LEDS_ADDR           # Board LEDs display
-    li      k1, 0xaaaaaa            # alternating one-zeros。我们有 24 个 LED 灯, 6 个 1010 应该足够了
-    sw      k1, 0(k0)               # Write pattern to LEDs
+    li      t0, LEDS_ADDR           # Board LEDs display
+    li      t1, 0xaaaaaa            # alternating one-zeros。我们有 24 个 LED 灯, 6 个 1010 应该足够了
+    sw      t1, 0(t0)               # Write pattern to LEDs
     # sw 指令：sw rS, offset16(rT):  mem32(rT+offset16) <- rS
     # 32，16：一下子 write 内存 32 位，仅取 offset 低 16 位
     eret
