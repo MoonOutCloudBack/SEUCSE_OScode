@@ -23,6 +23,11 @@ static u_long freemem;
 static struct FreePageList page_free_list; /* Free list of physical pages */
 struct HashTable ht;
 
+extern u32 get_epc();
+extern u32 get_badaddr();
+extern u32 get_status();
+
+
 u_long getNextTlb()//要写的下一个tlb
 {
     //TODO

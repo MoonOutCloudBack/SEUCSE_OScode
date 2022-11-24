@@ -13,7 +13,7 @@ static int need[NUMBER_OF_CUSTOMERS][NUMBER_OF_RESOURCES];       //进程还需�
 static int status[NUMBER_OF_CUSTOMERS];                          //进程是否完成 1 为完成
 static int asid_list[NUMBER_OF_CUSTOMERS];                       // asid to index mapping
 
-extern void asid_list_init();
+extern u32 get_asid();
 
 void asid_list_init()
 {
