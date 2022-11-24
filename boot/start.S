@@ -92,6 +92,10 @@ temp:
             .globl curtf
 curtf:
 			.word 0
+			
+			.section .data.stk
+KERNEL_STACK:
+			.space 0x8000
 
 
 
