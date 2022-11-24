@@ -12,6 +12,7 @@
 #include <asm/regdef.h>
 #include <asm/cp0regdef.h>
 #include <asm/asm.h>
+#include <m32c0.h>
 .section .text.exc_vec3
 # NESTED(except_vec3, 0, sp)
 # 		.set	noat
@@ -39,7 +40,7 @@ _mips_general_exception:  # 中断处理地址
 		 * Register saving is delayed as long as we dont know
 		 * which registers really need to be saved.
 		 */
-#  1:	//j	1b
+  1:	//j	1b
 # 	nop
 
 		sw		sp, kernel_sp 
@@ -149,7 +150,7 @@ LEAF(_start)
 	sw      t0,mCONTEXT
 
 	# Clear boot interrupt vector bit in Coprocessor 0 Status register
-	macro: mips32_bicsr (SR_BEV);
+	# macro: mips32_bicsr (SR_BEV);
 
 
 	/* jump to main */
@@ -157,9 +158,9 @@ LEAF(_start)
 	# UM=0;CP0=0;IE=0,内核态，开中断 
 	# 这里和讲义上写的不一样?
 	# !! 负责运行bootloader的main() 和init里的main不是同一个东西
-	mfc0 t0 CP0_STATUS
-	ori t0 0x1 # 最后一位置1，IE=1
-	mtc0 t0 CP0_STATUS #结果写入status寄存器
+	mfc0 t0, CP0_STATUS
+	ori t0, 0x1 # 最后一位置1，IE=1
+	mtc0 t0, CP0_STATUS #结果写入status寄存器
 
 	jal     main
 
