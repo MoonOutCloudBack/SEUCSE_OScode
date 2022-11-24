@@ -22,7 +22,7 @@ NESTED(handle_sys,TF_SIZE, sp)
     addu t2, a0 # [t2] = [v0] - __NR_SYSCALLS，如果 [t2]<=0，t0=1，否则t0=0
     # li  t1, -0x1
     # addu t2, t1 # [t2] = [v0] - __NR_SYSCALLS - 1
-    blez t2,core_ret_1 # if [t2]<=0,goto set_t0_1
+    blez t2,set_t0_1 # if [t2]<=0,goto set_t0_1
     li  t0,0x0
     j end_set_t0
 set_t0_1:

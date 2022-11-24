@@ -1,6 +1,5 @@
 //共享内存 Hash表
-
-#include "stdio.h"
+#include<stddef.h>
 #define HashMaxSize 10    //宏定义哈希表的最大容量
 #define LoadFactor 0.8       //宏定义负载因子，用于表示哈希表的负载能力。
 
