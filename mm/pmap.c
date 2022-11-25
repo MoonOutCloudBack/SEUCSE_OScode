@@ -30,12 +30,9 @@ extern u32 get_status();
 
 u_long getNextTlb()//要写的下一个tlb
 {
-    //TODO
-    tlbCount = mips_tlb_size();
-    printf("nexttlb:%d\n",tlbCount);
-    int ret = tlbCount;
-    tlbCount = (tlbCount + 1) % maxTLB;
-    return ret;
+    printf("getNextTlb(): before increment, tlbCount = %d\n",tlbCount);
+    printf("getNextTlb(): after increment, tlbCount = %d\n",(tlbCount + 1) % maxTLB);
+    return tlbCount = (tlbCount + 1) % maxTLB;
 }
 
 
