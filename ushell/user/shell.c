@@ -24,7 +24,6 @@
 
 
 #define CMDBUF_SIZE	80	// enough for one VGA text line
-FATFS FatFs;   // Work area (file system object) for logical drive
 
 struct Command {
     const char *name;
