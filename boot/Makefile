@@ -11,7 +11,7 @@ INCLUDES	  := -I../inc/
 # ======== End of configuration ===
 
 %.o: %.S
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< 
+	$(CC) $(CFLAGS) $(INCLUDES) -c -fno-builtin $< 
 
 .PHONY: clean
 

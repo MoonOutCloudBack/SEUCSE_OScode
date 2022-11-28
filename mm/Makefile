@@ -1,10 +1,10 @@
 INCLUDES	:= -I./ -I../ -I../inc/ 
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -std=gnu11 -c $<
+	$(CC) $(CFLAGS) $(INCLUDES) -std=gnu11 -c -fno-builtin $<
 
 %.o: %.S
-	$(CC) $(CFLAGS) $(INCLUDES) -c $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -fno-builtin $<
 
 .PHONY: clean
 

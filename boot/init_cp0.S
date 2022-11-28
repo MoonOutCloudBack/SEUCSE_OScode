@@ -62,7 +62,7 @@ LEAF(init_cp0)
 
     # Initialize Status
 	li		v1, 0x00400404		# (M_StatusERL | M_StatusIPL1 | M_StatusBEV)
-	mtc0	v1, CP0_STATUS		# write CP0_Status 
+	mtc0	v1, C0_STATUS		# write CP0_Status 
 
 	# Initialize Watch registers if implemented.
 	mfc0	v0, C0_CONFIG1		# read C0_Config1

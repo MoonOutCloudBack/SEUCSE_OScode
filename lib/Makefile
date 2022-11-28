@@ -3,7 +3,7 @@ INCLUDES := -I./ -I../ -I../inc/
 	$(CC) $(CFLAGS) $(INCLUDES) -c -fno-builtin $<
 
 %.o: %.S
-	$(CC) $(CFLAGS) $(INCLUDES) -c $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c -fno-builtin $<
 
 .PHONY: clean
 
