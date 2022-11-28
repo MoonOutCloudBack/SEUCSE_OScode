@@ -2,7 +2,7 @@
 
 void vga_print_init()
 {
-    for(int i = 0; i < SCREEN_MAX; ++i) chMap[i] = 0;
+    for(int i = 0; i < SCREEN_MAX; ++i) chMap[i] = ' ';
     cusor = 0;
 }
 
@@ -31,7 +31,7 @@ void vga_print_char(const char ch) {
             }
         }
         for(int j = 0; j < SCREEN_W; ++j) {
-            chMap[SCREEN_MAX - SCREEN_W + j] = 0;
+            chMap[SCREEN_MAX - SCREEN_W + j] = ' ';
         }
         cusor -= SCREEN_W;
     }
