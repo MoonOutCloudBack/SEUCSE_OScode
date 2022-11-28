@@ -134,6 +134,8 @@ extern "C" {
   } FATFS;
 
 
+extern FATFS FatFs;   // Work area (file system object) for logical drive
+
 
   /* File object structure (FIL) */
 
