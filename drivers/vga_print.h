@@ -5,9 +5,9 @@
 #define SCREEN_MAX      SCREEN_W * SCREEN_H
 #define TAB_W           4
 
-int             cusor;          // cusor is the last position, 0 <= cusor < SCREEN_MAX
+extern int cusor; // cusor is the last position, 0 <= cusor < SCREEN_MAX
 
-unsigned char   chMap[SCREEN_MAX];
+extern unsigned char chMap[SCREEN_MAX];
 
 void vga_print_init();
 

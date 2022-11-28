@@ -269,7 +269,7 @@ int env_alloc_arg(struct Env **new, u_int parent_id, char *arg)
 	return 0;
 }
 
-FATFS FatFs; // Work area (file system object) for logical drive
+extern FATFS FatFs; // Work area (file system object) for logical drive
 
 // max size of file image is 16M
 #define MAX_FILE_SIZE 0x1000000

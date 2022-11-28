@@ -1,6 +1,6 @@
 #include "../fs/ff.h"
 #include "../inc/printf.h"
-FATFS FatFs;   // Work area (file system object) for logical drive
+extern FATFS FatFs;   // Work area (file system object) for logical drive
 
 extern void device_init();
 extern void sys_init();
