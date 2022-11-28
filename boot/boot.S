@@ -104,7 +104,7 @@ init_resources:                 # initializes resources for "cpu".
  
    # la      t0, init_tlb        # Generate unique EntryHi contents per entry pair，以防 tlb 重复项而关闭
    # jr      t0
-   
+
     jal init_tlb
     nop
 
@@ -140,7 +140,10 @@ init_resources:                 # initializes resources for "cpu".
     ins         t0, t1, 29, 1       # changed to KSEG1 address by setting bit 29
     # ins 指令：rD, rS, pos, size;  insert，rD[P+S-1:P] = rS[S-1:0]
     # 在这里，表示将 change_k0_cca 第 29 位, 置为 1
-    jr          t0
+    
+    #jr          t0
+
+    jalr         t0
     nop
 
     # Initialize the Data cache

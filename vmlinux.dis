@@ -533,44 +533,44 @@ d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:89
 bfc00024:	7000003f 	sdbbp
 
 bfc00028 <init_resources>:
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:98
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:100
 bfc00028:	0ff000a2 	jal	bfc00288 <init_cp0>
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:99
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:101
 bfc0002c:	00000000 	nop
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:104
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:108
 bfc00030:	0ff000c2 	jal	bfc00308 <init_tlb>
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:105
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:109
 bfc00034:	00000000 	nop
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:134
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:138
 bfc00038:	3c08bfc0 	lui	t0,0xbfc0
 bfc0003c:	2508011c 	addiu	t0,t0,284
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:135
-bfc00040:	24090001 	li	t1,1
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:136
-bfc00044:	7d28ef44 	ins	t0,t1,0x1d,0x1
 d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:139
-bfc00048:	01000008 	jr	t0
+bfc00040:	24090001 	li	t1,1
 d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:140
+bfc00044:	7d28ef44 	ins	t0,t1,0x1d,0x1
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:146
+bfc00048:	0100f809 	jalr	t0
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:147
 bfc0004c:	00000000 	nop
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:151
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:158
 bfc00050:	3c1fbfc0 	lui	ra,0xbfc0
 bfc00054:	27ff0070 	addiu	ra,ra,112
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:152
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:159
 bfc00058:	00002025 	move	a0,zero
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:154
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:161
 bfc0005c:	3c028001 	lui	v0,0x8001
 bfc00060:	24420000 	addiu	v0,v0,0
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:156
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:163
 bfc00064:	4082f000 	mtc0	v0,c0_errorepc
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:158
-bfc00068:	000000c0 	ehb
 d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:165
+bfc00068:	000000c0 	ehb
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:172
 bfc0006c:	42000018 	eret
 
 bfc00070 <all_done>:
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:174
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:181
 bfc00070:	0bf0001c 	j	bfc00070 <all_done>
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:178
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:185
 bfc00074:	00000000 	nop
 
 bfc00078 <init_icache>:
@@ -681,12 +681,12 @@ bfc0012c:	03e00408 	jr.hb	ra
 d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/init_caches.S:221
 bfc00130:	00000000 	nop
 	...
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:193
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:200
 bfc00200:	7000003f 	sdbbp
 	...
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:197
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:204
 bfc00280:	7000003f 	sdbbp
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:198
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:205
 bfc00284:	00000000 	nop
 
 bfc00288 <init_cp0>:
@@ -746,9 +746,9 @@ bfc002ec:	03e00008 	jr	ra
 d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/init_cp0.S:107
 bfc002f0:	00000000 	nop
 	...
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:203
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:210
 bfc00300:	7000003f 	sdbbp
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:204
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:211
 bfc00304:	00000000 	nop
 
 bfc00308 <init_tlb>:
@@ -801,29 +801,29 @@ bfc00354:	03e00008 	jr	ra
 d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/init_tlb.S:143
 bfc00358:	00000000 	nop
 	...
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:211
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:218
 bfc00380:	3c08b060 	lui	t0,0xb060
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:212
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:219
 bfc00384:	3c0900aa 	lui	t1,0xaa
 bfc00388:	3529aaaa 	ori	t1,t1,0xaaaa
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:213
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:220
 bfc0038c:	ad090000 	sw	t1,0(t0)
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:216
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:223
 bfc00390:	42000018 	eret
 	...
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:223
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:230
 bfc00480:	3c18b060 	lui	t8,0xb060
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:224
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:231
 bfc00484:	4084f800 	mtc0	a0,c0_desave
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:225
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:232
 bfc00488:	4004c000 	mfc0	a0,c0_depc
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:226
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:233
 bfc0048c:	af040000 	sw	a0,0(t8)
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:227
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:234
 bfc00490:	4004f800 	mfc0	a0,c0_desave
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:228
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:235
 bfc00494:	1000ffff 	b	bfc00494 <done_init_tlb+0x140>
-d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:229
+d:\大四\计算机综合设计\SEUCSE_OScode-master\SEUCSE_OScode\boot/boot.S:236
 bfc00498:	00000000 	nop
 	...
 
@@ -22784,14 +22784,14 @@ Disassembly of section .debug_line:
       5c:	4b83013f 	c2	0x183013f
       60:	4a0e034e 	c2	0xe034e
       64:	4b4b4c4b 	c2	0x14b4c4b
-      68:	4b4a0903 	c2	0x14a0903
-      6c:	1d034b4f 	0x1d034b4f
-      70:	4d4b834a 	0x4d4b834a
+      68:	4b4a0b03 	c2	0x14a0b03
+      6c:	1d034b51 	0x1d034b51
+      70:	504b834a 	beql	v0,t3,fffe0d9c <done_init_tlb+0x403e0a48>
       74:	4a0b034b 	c2	0xb034b
       78:	4c844c83 	0x4c844c83
       7c:	4a090351 	c2	0x90351
       80:	0302044e 	0x302044e
-      84:	4e4a7f95 	c3	0x4a7f95
+      84:	4e4a7f8e 	c3	0x4a7f8e
       88:	514c4b4d 	beql	t2,t4,12dc0 <__tlb_stride_length+0x12dbf>
       8c:	4b504b4b 	c2	0x1504b4b
       90:	4b524d4f 	c2	0x1524d4f
@@ -22805,10 +22805,10 @@ Disassembly of section .debug_line:
       b0:	034b4d4b 	0x34b4d4b
       b4:	4b4b4a0c 	c2	0x14b4a0c
       b8:	044b4b4b 	tltiu	v0,19275
-      bc:	02640301 	0x2640301
+      bc:	026b0301 	0x26b0301
       c0:	4b0101d0 	c2	0x10101d0
       c4:	4b157c02 	c2	0x1157c02
-      c8:	fa030304 	sdc2	$3,772(s0)
+      c8:	f3030304 	0xf3030304
       cc:	4d834a7e 	nmsub.ps	$f9,$f12,$f9,$f3
       d0:	4d4b4b4b 	0x4d4b4b4b
       d4:	4c4b4c4b 	0x4c4b4c4b
@@ -22816,15 +22816,15 @@ Disassembly of section .debug_line:
       dc:	4c4b4c4b 	0x4c4b4c4b
       e0:	4f4b4c4b 	c3	0x14b4c4b
       e4:	044b4c4d 	tltiu	v0,19533
-      e8:	00e00301 	0xe00301
+      e8:	00e70301 	0xe70301
       ec:	04044bf2 	0x4044bf2
-      f0:	4a7f9c03 	c2	0x7f9c03
+      f0:	4a7f9503 	c2	0x7f9503
       f4:	4b4b4b4d 	c2	0x14b4b4d
       f8:	4b4c504b 	c2	0x14c504b
       fc:	4e4d4b4b 	c3	0x4d4b4b
      100:	4b4d4b4b 	c2	0x14d4b4b
      104:	4b4e4b4c 	c2	0x14e4b4c
-     108:	c4030104 	lwc1	$f3,260(zero)
+     108:	cb030104 	lwc2	$3,260(t8)
      10c:	01280200 	0x1280200
      110:	4b4d834b 	c2	0x14d834b
      114:	1801ec02 	0x1801ec02
