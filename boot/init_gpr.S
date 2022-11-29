@@ -122,4 +122,3 @@ done_init_gpr:
     jr      ra
     nop
 END(init_gpr)
-

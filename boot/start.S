@@ -43,7 +43,7 @@ _mips_general_exception:  # 中断处理地址
 #   1:	//j	1b
 # 	nop
 
-		sw		sp, kernel_sp 
+		 sw		sp, kernel_sp 
 		mfc0	k1,CP0_CAUSE
 		
 		la	k0, exception_handlers # la命令应该是加载内存地址
@@ -142,10 +142,10 @@ LEAF(_start)
 
 	/* disable kernel mode cache */
 	# 重点是修改 Config Register 的 2:0 位
-	mfc0    t0, CP0_CONFIG # 读取CP0_CONFIG寄存器
-	and     t0, ~0x7 # ~0x7 应该是对 0000_0111 做1扩展，即ffff_fff7，把config的后三位置0
-	ori     t0, 0x2 # 或立即数，[t0] = [t0] OR 0000_0010 ，把倒数第2位置1
-	mtc0    t0, CP0_CONFIG
+	# mfc0    t0, CP0_CONFIG # 读取CP0_CONFIG寄存器
+	# and     t0, ~0x7 # ~0x7 应该是对 0000_0111 做1扩展，即ffff_fff7，把config的后三位置0
+	# ri     t0, 0x2 # 或立即数，[t0] = [t0] OR 0000_0010 ，把倒数第2位置1
+	# mtc0    t0, CP0_CONFIG
 
 	/* set up stack */
 	# KERNEL的栈顶位置,16K
@@ -176,4 +176,3 @@ loop:
 	j	loop
 	nop
 END(_start)
-

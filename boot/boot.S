@@ -97,7 +97,7 @@ init_resources:                 # initializes resources for "cpu".
    # la      t0, init_cp0        # Init CP0 Status, Count, Compare, Watch*, and Cause.
    # jr      t0
 
-   jal init_cp0
+    jal      init_cp0
     nop
 
     # Initialize the TLB
@@ -105,7 +105,7 @@ init_resources:                 # initializes resources for "cpu".
    # la      t0, init_tlb        # Generate unique EntryHi contents per entry pair，以防 tlb 重复项而关闭
    # jr      t0
 
-    jal init_tlb
+    jal     init_tlb
     nop
 
     #Initialize the Instruction cache
