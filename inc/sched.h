@@ -7,4 +7,6 @@ void sched_init(void);
 void sched_yield(void);
 void sched_intr(int); 
 
+void sched_yield_voluntarily_giveup(void);
+
 #endif /* __SCHED_H__ */

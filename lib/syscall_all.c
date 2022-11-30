@@ -691,11 +691,12 @@ void sys_ipc_recv(int sysno, u_int dstva)
 	curenv->env_ipc_recving = 1;
 	curenv->env_ipc_dstva = dstva;
 
-	remaining_time = 0;
+	// remaining_time = 0;
 	void *src = KERNEL_SP - sizeof(struct Trapframe);
 	void *dst = TIMESTACK - sizeof(struct Trapframe);
 	bcopy(src, dst, sizeof(struct Trapframe)); // bit copy
-	sched_yield();
+	// sched_yield();
+	sched_yield_voluntarily_giveup();
 }
 
 // 释放自己, 目前直接调用 env_free(), 由于 tlb_invalidate 接口问题只能接受 curenv
