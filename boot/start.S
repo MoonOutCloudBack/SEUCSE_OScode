@@ -43,7 +43,7 @@ _mips_general_exception:  # 中断处理地址
 #   1:	//j	1b
 # 	nop
 
-		 sw		sp, kernel_sp 
+		sw		sp, kernel_sp 
 		mfc0	k1,CP0_CAUSE
 		
 		la	k0, exception_handlers # la命令应该是加载内存地址

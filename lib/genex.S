@@ -25,8 +25,9 @@ NESTED(handle_tlb, TF_SIZE, sp)
 
 	mfc0	k0,CP0_BADVADDR  # 引发中断的虚拟地址
 	# a0,a1是后面va2pa()的两个参数,两个参数的意义?
+	mfc0	a1,	CP0_BADVADDR
 	lw	a0, mCONTEXT
-    mfc0	a1,	CP0_BADVADDR		 
+   		 
 	                         
 	jal		va2pa_print		# 这个函数会查页表，看有没有虚拟地址对应的物理页
 	nop
@@ -34,15 +35,16 @@ NESTED(handle_tlb, TF_SIZE, sp)
 	li		t0, 0xFFFFFFFF 
 	beq		v0, t0, page_fault  
 	nop	
-	j	tlb_refill_done      # 不用新建页，只需要把映射关系填到tlb里
+	j	b1      # 不用新建页，只需要把映射关系填到tlb里
 	nop
 
 page_fault:  	# page fault occur，新建页
 	
 	               # 引发中断的虚拟地址
 	# 传参
-	lw		a0,mCONTEXT
-	mfc0	a1,CP0_BADVADDR               
+	mfc0	a0,CP0_BADVADDR  
+	lw		a1,mCONTEXT
+	             
 
 	jal	pageout    # 创建页
 	nop
@@ -102,20 +104,23 @@ SET_ENTRYLO1:
 tlb_refill_done:
 	# todo TLB重填
 	tlbp
-	nop
-	nop
-	nop
-	nop
+	# nop
+	# nop
+	# nop
+	# nop
 	mfc0 k0,CP0_INDEX
 	// if co0_index==1 goto oldTlb
-	li	k1,0x1
-	beq	k0,k1,oldTlb
-	
+	# li	k1,0x1
+	# beq	k0,k1,oldTlb
+	bgtz 	k0, oldTlb
+	nop
+	nop
 	jal getNextTlb
 
 	nop
 	mtc0    v0, CP0_INDEX 
-	tlbwi
+	# tlbwi
+
 
 oldTlb:	
 	ehb # 确保前面所有操作已完成
