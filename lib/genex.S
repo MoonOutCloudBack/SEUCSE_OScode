@@ -203,6 +203,20 @@ core_ret_1:
 
 NESTED(handle_addr, TF_SIZE, sp)
 	nop
+	# #######################################
+	mfc0	t1,CP0_EPC,2 # 读出异常产生地址(试图访问的越界地址)
+	li	t0,0x90000000
+	beq t0,t1,kill_progress # if(bad_addr == 0x90000000: kill progress)
+
+	# 开始调度进程
+	SAVE_TF 
+	j	clear_timer0_int
+	j	sched_yield
+	j	simple_return
+
+	# #######################################
+kill_progress:
+	nop
 	li		sp,0x80400000#切到内核SP  
 	# CLI
 	.set at # 开启at寄存器警告
@@ -271,7 +285,7 @@ timer_irq: # 用来清空计时器并调用 sched_yield 函数
 	# 处理定时器
 	j	clear_timer0_int
 	j	sched_yield # sched_yield 中会从PCB中恢复上下文和EPC
-	j	ret_from_exception # simple_return?
+	j	simple_return # simple_return?
 
 	# sched_yield 中并没有跳转，这里是否需要跳转，跳转到EPC?（EPC其实就是当前上下文中PC的值）
 	# 是否要重置计时器?
