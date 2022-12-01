@@ -16,19 +16,23 @@ NESTED(handle_sys,TF_SIZE, sp)
     # 系统调用号为什么是从v0拿的? 讲义中写的是从a0中拿
     # 系统调用的参数是否需要处理?
     # 异常处理为什么一会用k寄存器一会用t寄存器?
-    addiu   a0, a0, -__SYSCALL_BASE  # a0 = a0 - __SYSCALL_BASE，得到相对偏移
+  #  addiu   a0, a0, -__SYSCALL_BASE  # a0 = a0 - __SYSCALL_BASE，得到相对偏移
     # _if(a0 < __NR_SYSCALLS+1) t0=1 else t0=0  __NR_SYSCALLS是系统调用总个数
-    li  t2, -__NR_SYSCALLS
-    addu t2, a0 # [t2] = [v0] - __NR_SYSCALLS，如果 [t2]<=0，t0=1，否则t0=0
+  #  li  t2, -__NR_SYSCALLS
+  #  addu t2, a0 # [t2] = [v0] - __NR_SYSCALLS，如果 [t2]<=0，t0=1，否则t0=0
     # li  t1, -0x1
     # addu t2, t1 # [t2] = [v0] - __NR_SYSCALLS - 1
-    blez t2,set_t0_1 # if [t2]<=0,goto set_t0_1
-    li  t0,0x0
-    j end_set_t0
-set_t0_1:
-    li  t0,0x1
+  #  blez t2,set_t0_1 # if [t2]<=0,goto set_t0_1
+  #  li  t0,0x0
+  #  j end_set_t0
+#set_t0_1:
+  #  li  t0,0x1
 
-end_set_t0:
+#end_set_t0:
+
+    subu    a0, a0, __SYSCALL_BASE
+    sltiu   t0, a0, __NR_SYSCALLS + 1
+
 
     #  set epc as epc plus 4 对于系统调用异常来说，处理返回地址是下一条指令的地址，而非当前指令的地址
     #  Where is the next being exectued cpu instruction when return from exception?
@@ -40,7 +44,7 @@ end_set_t0:
     #  ——if legal , goto the right function s address
     beq     t0, zero, illegal_syscall # _if t0 = 0, goto illegal_syscall
     nop
-    sll     t0, v0, 2            # 把序号偏移左移两位，相当于乘以4，得到一个地址偏移（一个地址4字节
+    sll     t0, a0, 2            # 把序号偏移左移两位，相当于乘以4，得到一个地址偏移（一个地址4字节
     la      t1, sys_call_table   # load address : t1 <- sys_call_table 总入口
     addu    t1, t1, t0           # t1 = t1 + t0 得到具体入口
     lw      t2, 0(t1)            # t2 = MEM(t1)  取这个位置的指针
