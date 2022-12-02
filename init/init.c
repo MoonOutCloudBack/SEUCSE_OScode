@@ -115,23 +115,23 @@ void sys_init()
     printf("\n@@AFTER INIT: CP0_status: 0x%x\n\n",get_status());
     
 
-    env_create_priority("ushell.elf", 0);        //shell优先级得调低
-    // env_create_priority("create2.elf", 2);    // 在里面load两个elf： test1.elf和test2.elf，然后把自身释放掉
-    // env_create_priority("led1.elf", 2);//亮led灯
-    // env_create_priority("test_end.elf", 2);//跑一句printf就结束
-    // env_create_priority("led2.elf", 2);
-    // env_create_priority("led3.elf", 2);
+    //env_create_priority("ushell.elf", 0);         // √     //shell优先级得调低  
+    env_create_priority("create2.elf", 2);        // ×         // 在里面load两个elf： test1.elf和test2.elf，然后把自身释放掉
+    // env_create_priority("led1.elf", 2);          // √          //亮led灯
+    //env_create_priority("test_end.elf", 2);       // √      //跑一句printf就结束
+    // env_create_priority("led2.elf", 2);          // √
+    // env_create_priority("led3.elf", 2);          // √
 
 
-    // env_create_priority("test1.elf", 2);//循环打印test one
-    // env_create_priority("test_end.elf", 1);//跑一句printf就结束
-    // env_create_priority("test2.elf", 1);//循环打印test two
-    // env_create_priority("thread.elf", 2);//创建线程，循环打印test one
+    // env_create_priority("test1.elf", 2);         // √        //循环打印test one
+    // env_create_priority("test_end.elf", 1);      // √            //跑一句printf就结束
+    // env_create_priority("test2.elf", 1);         // √            //循环打印test two
+    // env_create_priority("thread.elf", 2);        // ×        //创建线程，循环打印test one
 
 
-    // // //test 两个一起测共享内存
-    // env_create_priority("share1.elf", 1);  //往共享内存页某个地址写99
-    // env_create_priority("share2.elf", 2);  //读出共享内存页某个地址 输出写进去的数据
+    // // //test 两个一起测共享内存                  // √
+    // env_create_priority("share1.elf", 1);             //往共享内存页某个地址写99
+    // env_create_priority("share2.elf", 2);            //读出共享内存页某个地址 输出写进去的数据
 
 
     asm ("ei");//中断使能

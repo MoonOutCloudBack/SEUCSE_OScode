@@ -40,11 +40,16 @@ void sched_yield()
 		do { 
 			if(tempE->env_pri > highestPt) {
 				highestPt = tempE->env_pri; 
-				e = tempE;
+				//e = tempE;
 			}
 			tempE = tempE->env_link;
+			
 
 		} while(tempE != env_runnable_head);
+		//根据XQY的代码修改
+		do{
+			e=e->env_link;
+		}while(e->env_pri<highestPt && e->env_status != ENV_RUNNABLE);
 
 		printf("\ncur env_id: 0x%x\n", curenv->env_id);
 		printf("next env_id: 0x%x\n", e->env_id);

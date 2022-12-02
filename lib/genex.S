@@ -231,7 +231,7 @@ kill_progress:
 
 	andi t1, t0, STATUSF_IP0  # t0和立即数0X400相与，取出t0第10位(IP1&IM1)，结果存t1，
 	jal print_addr_error    # 进程模块中实现的函数
-	j simple_return # 不需要恢复上下文
+	# j simple_return # 不需要恢复上下文
 	
 	nop
 END(handle_addr)
