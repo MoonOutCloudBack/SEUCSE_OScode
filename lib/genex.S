@@ -288,13 +288,19 @@ button_deal:
 timer_irq: # 用来清空计时器并调用 sched_yield 函数
 	nop
 	# 处理定时器
-	j	clear_timer0_int
-	j	sched_yield # sched_yield 中会从PCB中恢复上下文和EPC
-	j	simple_return # simple_return?
+#	j	clear_timer0_int
+#	j	sched_yield # sched_yield 中会从PCB中恢复上下文和EPC
+#	j	ret_from_exception # simple_return?
 
 	# sched_yield 中并没有跳转，这里是否需要跳转，跳转到EPC?（EPC其实就是当前上下文中PC的值）
 	# 是否要重置计时器?
+	jal		clear_timer0_int	# clear timer0
+	nop
+	
+	jal		sched_yield			# change process
+	nop
 
+	j 		ret_from_exception
 	# mfc0	t1,CP0_EPC,2
 	# j t1
 	nop
