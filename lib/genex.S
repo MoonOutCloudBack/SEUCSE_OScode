@@ -59,6 +59,7 @@ b1:   # 判断是奇数还是偶数页
 
 	
 	mfc0	k0,CP0_BADVADDR  # 暂存，下面用来转成另一个地址
+	move    a1, k0
 	andi	k0, 0x00001000    # 提取第12位，判断奇数还是偶数  是第12位还是第13位?
     bne		k0,zero,SET_ENTRYLO1  # 不为0，为奇
 	nop
