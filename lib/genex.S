@@ -205,7 +205,7 @@ core_ret_1:
 NESTED(handle_addr, TF_SIZE, sp)
 	nop
 	# #######################################
-	mfc0 k1, C0_BADVADDR # 读出异常产生地址(试图访问的越界地址)
+	mfc0 k1, CP0_BADVADDR # 读出异常产生地址(试图访问的越界地址)
 	li	k0,0x90000000
 	beq k0,k1,kill_progress # if(bad_addr == 0x90000000: kill progress)
 
