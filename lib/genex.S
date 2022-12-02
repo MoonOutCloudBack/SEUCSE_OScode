@@ -204,15 +204,19 @@ core_ret_1:
 NESTED(handle_addr, TF_SIZE, sp)
 	nop
 	# #######################################
-	mfc0	t1,CP0_EPC,2 # 读出异常产生地址(试图访问的越界地址)
-	li	t0,0x90000000
-	beq t0,t1,kill_progress # if(bad_addr == 0x90000000: kill progress)
+	mfc0 k1, C0_BADVADDR # 读出异常产生地址(试图访问的越界地址)
+	li	k0,0x90000000
+	beq k0,k1,kill_progress # if(bad_addr == 0x90000000: kill progress)
 
-	# 开始调度进程
-	SAVE_TF 
-	j	clear_timer0_int
-	j	sched_yield
-	j	simple_return
+	# 理论上该异常一定是非嵌套异常
+
+	# 返回 pc+4 继续执行
+	mfc0	k1,CP0_EPC,2 # 读出pc
+	addi k1, k1, 4 # pc = pc+4
+	nop
+	eret # 返回用户模式
+	nop
+	j k1 # 跳回k1继续执行
 
 	# #######################################
 kill_progress:
@@ -225,7 +229,8 @@ kill_progress:
 	and t0, t2 # IM位和IP位与运算
 
 	andi t1, t0, STATUSF_IP0  # t0和立即数0X400相与，取出t0第10位(IP1&IM1)，结果存t1，
-	j print_addr_error    # 进程模块中实现的函数
+	jal print_addr_error    # 进程模块中实现的函数
+	j simple_return # 不需要恢复上下文
 	
 	nop
 END(handle_addr)
