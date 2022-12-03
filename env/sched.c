@@ -34,22 +34,26 @@ void sched_yield()
 	}
 	else							// 根据优先级进行调度
 	{
-		int highestPt = 0;
-		struct Env *tempE = env_runnable_head;
-		// 遍历一次，同时维护最高优先级和优先级最高的进程
-		do { 
-			if(tempE->env_pri > highestPt) {
-				highestPt = tempE->env_pri; 
-				//e = tempE; 
-			}
-			tempE = tempE->env_link;
-			
+		if (env_runnable_head == NULL)         //todo 理论上不会出现,得放个进程在里面
+		{
+			printf("fail！empty sched queue!!!\n");
+			while(1);			
+		}
+		int highestPt=0; 
+		struct Env *tempE=env_runnable_head;
+		do{ 
+			if(tempE->env_pri>highestPt && tempE->env_status == ENV_RUNNABLE)
+				highestPt=tempE->env_pri; 
+			tempE=tempE->env_link;
+		}while(tempE!=env_runnable_head); 
 
-		} while(tempE != env_runnable_head);
-		//根据XQY的代码修改
-		do{
-			e=e->env_link;
-		}while(e->env_pri<highestPt && e->env_status != ENV_RUNNABLE);
+		e = env_runnable_head;
+		
+		do{ 
+			e=e->env_link; 
+		}while(e->env_pri<highestPt || e->env_status != ENV_RUNNABLE);
+
+
 
 		printf("\ncur env_id: 0x%x\n", curenv->env_id);
 		printf("next env_id: 0x%x\n", e->env_id);

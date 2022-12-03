@@ -162,7 +162,7 @@ FEXPORT(ret_from_exception) # 异常恢复
 	nop
 	# 判断是否嵌套
 	# 判断引起该异常的EPC是否位于内核区域，恢复的EPC应该就是引起正在处理的该异常的引发地址(其他寄存器保存的是)
-	mfc0	k1,CP0_EPC,2 # k1存储EPC，即处理结束后的返回地址
+	mfc0	k1,CP0_EPC  #,2    # k1存储EPC，即处理结束后的返回地址
 	li	k0,-0x80000000
 	addu k0,k1
 	bgez k0,core_ret # 如果是嵌套，跳转至 core_ret 进行处理
@@ -212,7 +212,7 @@ NESTED(handle_addr, TF_SIZE, sp)
 	# 理论上该异常一定是非嵌套异常
 
 	# 返回 pc+4 继续执行
-	mfc0	k1,CP0_EPC,2 # 读出pc
+	mfc0	k1,CP0_EPC  #,2 # 读出pc
 	addi k1, k1, 4 # pc = pc+4
 	nop
 	eret # 返回用户模式
