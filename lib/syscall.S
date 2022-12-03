@@ -16,19 +16,19 @@ NESTED(handle_sys,TF_SIZE, sp)
     # 系统调用号为什么是从v0拿的? 讲义中写的是从a0中拿
     # 系统调用的参数是否需要处理?
     # 异常处理为什么一会用k寄存器一会用t寄存器?
-  #  addiu   a0, a0, -__SYSCALL_BASE  # a0 = a0 - __SYSCALL_BASE，得到相对偏移
-    # _if(a0 < __NR_SYSCALLS+1) t0=1 else t0=0  __NR_SYSCALLS是系统调用总个数
-  #  li  t2, -__NR_SYSCALLS
-  #  addu t2, a0 # [t2] = [v0] - __NR_SYSCALLS，如果 [t2]<=0，t0=1，否则t0=0
+   # addiu   a0, a0, -__SYSCALL_BASE  # a0 = a0 - __SYSCALL_BASE，得到相对偏移
+    #  _if(a0 < __NR_SYSCALLS+1) t0=1 else t0=0  __NR_SYSCALLS是系统调用总个数
+   # li  t2, -__NR_SYSCALLS
+   # addu t2, a0 # [t2] = [v0] - __NR_SYSCALLS，如果 [t2]<=0，t0=1，否则t0=0
     # li  t1, -0x1
     # addu t2, t1 # [t2] = [v0] - __NR_SYSCALLS - 1
-  #  blez t2,set_t0_1 # if [t2]<=0,goto set_t0_1
-  #  li  t0,0x0
-  #  j end_set_t0
-#set_t0_1:
+    # blez t2,set_t0_1 # if [t2]<=0,goto set_t0_1
+    # li  t0,0x0
+    # j end_set_t0
+# set_t0_1:
   #  li  t0,0x1
 
-#end_set_t0:
+# end_set_t0:
 
     subu    a0, a0, __SYSCALL_BASE
     sltiu   t0, a0, __NR_SYSCALLS + 1

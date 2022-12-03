@@ -306,7 +306,7 @@ int sys_mem_unmap(int sysno, u_int envid, u_int va)
 // 创建线程
 int sys_pthread_create(int sysno, int *func, int *arg)
 {
-	pthread_create(func, *arg);
+	pthread_create(func, arg);
 	return 1;
 }
 

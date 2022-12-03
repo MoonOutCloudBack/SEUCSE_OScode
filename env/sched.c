@@ -40,7 +40,7 @@ void sched_yield()
 		do { 
 			if(tempE->env_pri > highestPt) {
 				highestPt = tempE->env_pri; 
-				//e = tempE;
+				//e = tempE; 
 			}
 			tempE = tempE->env_link;
 			
