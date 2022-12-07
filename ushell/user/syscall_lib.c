@@ -171,3 +171,8 @@ int syscall_rt_exit()
 {
 	msyscall(SYS_rt_exit,0,0,0,0,0);
 }
+
+int syscall_rt_mm_clflush(u32 addr)
+{
+	msyscall(SYS_rt_mm_clflush, addr, 0, 0, 0, 0);
+}

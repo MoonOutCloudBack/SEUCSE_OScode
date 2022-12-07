@@ -962,3 +962,9 @@ bool sys_rt_exit(int sysno)
 {
 	rt_task_exit();
 }
+
+extern void _mm_clflush(u32 addr);
+void syscall_rt_mm_clflush(u32 addr)
+{
+	_mm_clflush(addr);
+}

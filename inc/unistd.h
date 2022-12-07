@@ -2,7 +2,7 @@
 #define UNISTD_H
 
 #define __SYSCALL_BASE 9527     //基地址 不用改
-#define __NR_SYSCALLS 35        //加系统调用需要加这个数
+#define __NR_SYSCALLS 36        //加系统调用需要加这个数, 35 -> 36
 
 
 #define SYS_putchar 		((__SYSCALL_BASE ) + (0 ) ) 
@@ -40,5 +40,6 @@
 #define SYS_rt_claim_device  ((__SYSCALL_BASE ) + (32 ) )
 #define SYS_rt_write_by_num  ((__SYSCALL_BASE ) + (33 ) )
 #define SYS_rt_exit          ((__SYSCALL_BASE ) + (34 ) )
+#define SYS_rt_mm_clflush    ((__SYSCALL_BASE ) + (35 ) )
 
 #endif
