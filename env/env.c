@@ -640,7 +640,7 @@ void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg) // 不
 		}
 
 		/* Hint: find the pa and va of the page table. */
-		e->env_pgdir[pdeno] = env_src->env_pgdir[pdeno]; // 直接拷贝二级页表地址，共享二级页表
+		// e->env_pgdir[pdeno] = env_src->env_pgdir[pdeno]; // 直接拷贝二级页表地址，共享二级页表
 		printf("content:0x%x\n", e->env_pgdir[pdeno]);
 		pa = PTE_ADDR(env_src->env_pgdir[pdeno]); // 源二级页表物理地址
 		pt = (Pte *)KADDR(pa); // 源二级页表虚拟地址
@@ -652,6 +652,7 @@ void copy_curenv(struct Env *e, struct Env *env_src, void *func, int arg) // 不
 			if (pt[pteno] & PTE_V)
 			{
 				int pa_tmp = PTE_ADDR(pt[pteno]); 
+				page_insert(e->env_pgdir, pa2page(pa_tmp), (pdeno << PDSHIFT) | (pteno << PGSHIFT), PTE_V | PTE_R);
 				pa2page(pa_tmp)->pp_ref++; // 增加物理页的物理引用
 			}
 		}
