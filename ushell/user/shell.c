@@ -13,6 +13,8 @@
 // #include <console.h>
 #include "lib.h"
 // #include "syscall_lib.h"
+#include "meltdown.h"
+
 // max size of file image is 16M
 #define MAX_FILE_SIZE 0x1000000
 
@@ -40,7 +42,8 @@ static struct Command commands[] = {
     { "mkdir", "Create directory", mon_mkdir },
 	{ "read", "Read a file", mon_read },
 	{ "write", "Change a file", mon_write },
-	{ "rm", "Delete files or directories", mon_rm } //，
+	{ "rm", "Delete files or directories", mon_rm },
+    { "meltdown", "Test if the platform is vulnerable to Meltdown attack", do_meltdown } //，
 };
 
 

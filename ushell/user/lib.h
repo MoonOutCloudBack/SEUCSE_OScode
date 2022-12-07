@@ -82,7 +82,7 @@ int syscall_rt_require_device(u32 device_id, u32 num);
 int syscall_rt_release_device(u32 device_id, u32 num);
 int syscall_rt_claim_device(u32 * req);
 int syscall_rt_write_by_num(u32 device_id, u32 num, char *buf);
-
+int syscall_rt_mm_clflush(u32 addr);
 
 // string.c
 // int strlen(const char *s);

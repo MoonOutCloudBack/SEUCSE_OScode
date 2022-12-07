@@ -2,7 +2,14 @@
     "files.associations": {
         "types.h": "c",
         "console.h": "c",
-        "hash.h": "c"
+        "hash.h": "c",
+        "emmintrin.h": "c",
+        "fcntl.h": "c",
+        "meltdown.h": "c",
+        "lib.h": "c",
+        "unistd.h": "c",
+        "stdint.h": "c",
+        "timer.h": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }
