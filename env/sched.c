@@ -57,7 +57,10 @@ void sched_yield() {
 	if(remaining_time == 0) { // 时间到了，把所有进程都捞到最高优先级
 		tempE = env_runnable_head;
 		do { 
-			tempE->env_pri = MAX_ENV_PRIORITY;
+			if(tempE->env_pri>0)
+				{
+				tempE->env_pri = MAX_ENV_PRIORITY;
+				}
 			tempE = tempE->env_link;
 		} while(tempE != env_runnable_head);
 		remaining_time = TIME_TO_MAKE_ENV_ALL_PRIORIST;
@@ -75,7 +78,9 @@ void sched_yield() {
 			if(tempE->env_pri > highestPt) {
 				highestPt = tempE->env_pri; 
 				e = tempE;
+				
 			}
+		
 			tempE = tempE->env_link;
 
 		} while(tempE != env_runnable_head);
@@ -87,7 +92,7 @@ void sched_yield() {
 			while(1) ;
 		}
 		// curenv 优先级降一级
-		if(curenv->env_pri > 0) curenv->env_pri -= 1;
+		if(curenv->env_pri > 1) curenv->env_pri -= 1;
 	}
 
 

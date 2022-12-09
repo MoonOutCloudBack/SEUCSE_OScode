@@ -695,8 +695,8 @@ void sys_ipc_recv(int sysno, u_int dstva)
 	void *src = KERNEL_SP - sizeof(struct Trapframe);
 	void *dst = TIMESTACK - sizeof(struct Trapframe);
 	bcopy(src, dst, sizeof(struct Trapframe)); // bit copy
-	//sched_yield();
-	sched_yield_voluntarily_giveup();
+	sched_yield();
+	//sched_yield_voluntarily_giveup();
 }
 
 // 释放自己, 目前直接调用 env_free(), 由于 tlb_invalidate 接口问题只能接受 curenv
