@@ -51,13 +51,25 @@ void sched_yield() {
 	printf("\n\n### sched_yield -->CP0_status: 0x%x\n", get_status());
 
 	struct Env *e = curenv;
+	struct Env *tempE = NULL;
+
+	remaining_time -= 1; // 直接拿时间中断来粗略计时
+	if(remaining_time == 0) { // 时间到了，把所有进程都捞到最高优先级
+		tempE = env_runnable_head;
+		do { 
+			tempE->env_pri = MAX_ENV_PRIORITY;
+			tempE = tempE->env_link;
+		} while(tempE != env_runnable_head);
+		remaining_time = TIME_TO_MAKE_ENV_ALL_PRIORIST;
+	}
+
 	if(curenv == NULL) {             // 第一次进时间中断
 		e = env_runnable_head; 
 		printf("****************** first sched ******************* \n");
 	}
 	else {							// 根据优先级进行调度
 		int highestPt = 0;
-		struct Env *tempE = env_runnable_head;
+		tempE = env_runnable_head;
 		// 遍历一次，同时维护最高优先级和优先级最高的进程
 		do { 
 			if(tempE->env_pri > highestPt) {
@@ -74,22 +86,10 @@ void sched_yield() {
 			printf("fail! empty sched queue!!!\n");
 			while(1) ;
 		}
+		// curenv 优先级降一级
+		if(curenv->env_pri > 0) curenv->env_pri -= 1;
 	}
 
-	// curenv 优先级降一级
-	if(curenv->env_pri > 0) curenv->env_pri -= 1;
-
-	// 直接拿时间中断来粗略计时
-	remaining_time -= 1;
-	// 时间到了，把所有进程都捞到最高优先级
-	if(remaining_time == 0) {
-		struct Env *tempE = env_runnable_head;
-		do { 
-			tempE->env_pri = MAX_ENV_PRIORITY;
-			tempE = tempE->env_link;
-		} while(tempE != env_runnable_head);
-		remaining_time = TIME_TO_MAKE_ENV_ALL_PRIORIST;
-	}
 
 	env_run(e);
 	printf("\n!!!!!!!!!!!env: 0x%x has run!!!!!!\n", e->env_id);
