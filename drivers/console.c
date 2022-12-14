@@ -74,7 +74,7 @@ static struct {
 /* 
 called by device interrupt routines to feed input characters
 into the circular console input buffer.
-cons_intr 由想中断的设备调用，用来把想说的话填进 buffer
+cons_intr 由串口调用，用来把已经接收到的 console input 填进 buffer
 */
 static void cons_intr(int (*proc)(void)) { // 参数是一个int(void)的函数指针
 	// TODO
@@ -89,8 +89,8 @@ static void cons_intr(int (*proc)(void)) { // 参数是一个int(void)的函数�
 
 /*
 return the next input character from the console, or 0 if none waiting
-返回值为下一个要输出的字符（虽然 return 是 int 格式）
-如果没有字符在等着输出，就返回 0
+返回值为下一个 console 输入的字符（虽然 return 是 int 格式）
+如果没有字符输入，就返回 0
 */
 int cons_getc(void) {
 	// TODO
@@ -100,8 +100,7 @@ int cons_getc(void) {
 	// so that this function works even when interrupts are disabled
 	// (e.g., when called from the kernel monitor).
 	serial_intr();
-	// 把想说的话（已经在串口寄存器里了）填进 buffer
-	// 时刻调用一下，时刻填一下
+	// 把串口接收到的 console input（已经在串口寄存器里了）填进 buffer
 
 	// grab the next character from the input buffer.
 	if (cons.rpos != cons.wpos) { // 如果我还没读到 你刚停笔的位置
@@ -116,7 +115,7 @@ int cons_getc(void) {
 // output a character to the console
 // 把字符串 c 输出到 console
 static void cons_putc(int c) {
-	// 换行符处理：Windows的换行符是CRLF
+	// 换行符处理：Windows 的换行符是 CRLF
 	if (c == '\n') { // 如果要换行，那么换行 + 回车，貌似因为我们是 Windows 系统？
 		serial_putc(c);
 		serial_putc('\r');
